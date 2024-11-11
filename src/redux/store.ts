@@ -2,22 +2,17 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 
-import teamsReducer from './features/teams/teamsSlice';
-import holidaysReducer from './features/holidays/holidaysSlice';
-import policiesReducer from './features/policies/policiesSlice'
-import timesheetsReducer from './features/timesheet/timesheetSlice';
-import punchSheetReducer from '@/redux/features/punches/punchesSlice'
-import queryReducer from '@/redux/features/queries/queriesSlice'
+import employeesReducer from '@/redux/features/employees/employeesSlice';
+import salaryTemplateReducer from '@/redux/features/salaryTemplate/salaryTemplateSlice';
+import salaryComponentReducer from '@/redux/features/salaryComponent/salaryComponentSlice';
+// import SalaryTemplate from '@/views/SalaryTemplate';
 
 const store = configureStore({
   reducer: {
     // Add your reducers here
-    teams: teamsReducer,
-    holidays: holidaysReducer,
-    policies: policiesReducer,
-    timesheets: timesheetsReducer,
-    punches: punchSheetReducer,
-    queries: queryReducer
+    employees: employeesReducer,
+    salaryTemplates: salaryTemplateReducer,
+    salaryComponents: salaryComponentReducer
   }
 })
 
