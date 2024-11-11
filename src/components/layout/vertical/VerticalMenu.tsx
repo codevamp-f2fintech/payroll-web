@@ -89,6 +89,9 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
               Employees
             </MenuItem>
           }
+          <MenuItem href={`/payroll`} icon={<EventIcon />}>
+            Payroll
+          </MenuItem>
           <MenuItem href={`/salary-template`} icon={<EventIcon />}>
             Salary Template
           </MenuItem>
