@@ -52,6 +52,9 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
     setUserRole(user.role || null)
   }, [])
 
+  const EmsCond = process.env.NEXT_PUBLIC_APP_EMS
+  console.log("EmsCond", EmsCond);
+
   return (
     // eslint-disable-next-line lines-around-comment
     /* Custom scrollbar instead of browser scroll, remove if you want browser scroll only */
@@ -81,14 +84,17 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
           Dashboard
         </MenuItem>
         <MenuSection label='Apps & Pages'>
-          <MenuItem href={`/employees`} icon={<i className='ri-user-3-line' />}>
-            Payroll
+          {EmsCond !== 'true' &&
+            <MenuItem href={`/employees`} icon={<i className='ri-user-3-line' />}>
+              Employees
+            </MenuItem>
+          }
+          <MenuItem href={`/salary-template`} icon={<EventIcon />}>
+            Salary Template
           </MenuItem>
-          <MenuItem href={`/holidays`} icon={<EventIcon />}>
-            Salary
+          <MenuItem href={`/salary-component`} icon={<EventIcon />}>
+            Salary Component
           </MenuItem>
-
-
         </MenuSection>
       </Menu>
     </ScrollWrapper>

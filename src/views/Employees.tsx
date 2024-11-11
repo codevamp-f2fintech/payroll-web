@@ -20,7 +20,6 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import AddIcon from '@mui/icons-material/Add';
 import { fetchEmployees, resetEmployees } from '../redux/features/employees/employeesSlice';
-import { fetchDesignations } from '@/redux/features/designation/designationSlice';
 import Loader from "../components/loader/loader";
 import EmployeeForm from '@/components/employee/EmployeeForm';
 import EmployeeCard from '@/components/employee/EmployeeCard';
@@ -35,13 +34,11 @@ const { isTokenExpired } = utility();
 export default function EmployeeGrid() {
   const dispatch = useDispatch();
   const { employees, hasMore, loading, error } = useSelector((state: RootState) => state.employees);
-  const { designations } = useSelector((state: RootState) => state.designations);
 
   const [showForm, setShowForm] = useState(false);
   const [userRole, setUserRole] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [searchName, setSearchName] = useState('');
-  const [selectedDesignation, setSelectedDesignation] = useState('');
   const [page, setPage] = useState(1);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -67,24 +64,20 @@ export default function EmployeeGrid() {
   }, [token, userRole, router]);
 
   useEffect(() => {
-    dispatch(fetchDesignations({ page: 1, limit: 0, keyword: "" }));
-  }, [])
-
-  useEffect(() => {
-    if (searchName === '' && selectedDesignation === '') {
+    if (searchName === '') {
       dispatch(fetchEmployees({ page, limit: 12, search: '', designation: '' }));
     }
-  }, [dispatch, page, searchName, selectedDesignation]);
+  }, [dispatch, page, searchName]);
 
   const handleScroll = useCallback(() => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !loading && hasMore) {
       setPage((prevPage) => {
         const nextPage = prevPage + 1;
-        dispatch(fetchEmployees({ page: nextPage, limit: 12, search: searchName, designation: selectedDesignation }));
+        dispatch(fetchEmployees({ page: nextPage, limit: 12, search: searchName }));
         return nextPage;
       });
     }
-  }, [loading, hasMore, searchName, selectedDesignation, dispatch]);
+  }, [loading, hasMore, searchName, dispatch]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -127,7 +120,6 @@ export default function EmployeeGrid() {
     }
   };
 
-
   const handleClose = () => {
     setShowForm(false);
   };
@@ -135,34 +127,22 @@ export default function EmployeeGrid() {
   const debouncedSearch = useCallback(
     debounce(() => {
       dispatch(resetEmployees());
-      dispatch(fetchEmployees({ page: 1, limit: 12, search: searchName, designation: selectedDesignation }));
+      dispatch(fetchEmployees({ page: 1, limit: 12, search: searchName }));
     }, 500),
-    [searchName, selectedDesignation, dispatch]
+    [searchName, dispatch]
   );
 
   useEffect(() => {
-    if (searchName !== '' || selectedDesignation !== '') {
+    if (searchName !== '') {
       debouncedSearch();
     }
-  }, [searchName, selectedDesignation, debouncedSearch]);
+  }, [searchName, debouncedSearch]);
 
   const handleInputChange = (e) => {
     const searchValue = e.target.value;
 
-    setSelectedDesignation('');
     setSearchName(searchValue);
     if (searchValue === '') {
-      setPage(1);
-      dispatch(resetEmployees());
-    }
-  };
-
-  const handleDesignationChange = (e) => {
-    const designationValue = e.target.value;
-
-    setSearchName('');
-    setSelectedDesignation(designationValue === null ? '' : designationValue);
-    if (designationValue === '') {
       setPage(1);
       dispatch(resetEmployees());
     }
@@ -212,24 +192,6 @@ export default function EmployeeGrid() {
               value={searchName}
               onChange={handleInputChange}
             />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <Autocomplete
-                id="designation-select"
-                options={designations
-                  .map((designation) => designation.title)
-                  .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))}
-                getOptionLabel={(option) => option}
-                renderInput={(params) => (
-                  <TextField {...params} label="Select Designation" variant="outlined" />
-                )}
-                value={selectedDesignation}
-                onChange={(event, newValue) => {
-                  handleDesignationChange({ target: { name: "designation", value: newValue } });
-                }}
-              />
-            </FormControl>
           </Grid>
         </Grid>
         <Grid container spacing={6}>

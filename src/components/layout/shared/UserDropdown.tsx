@@ -80,7 +80,7 @@ const UserDropdown = () => {
 
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/employees/get/${user.id}`)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_EMS_URL}/employees/get/${user.id}`)
         const data = await response.json()
 
         setUserData(data)
