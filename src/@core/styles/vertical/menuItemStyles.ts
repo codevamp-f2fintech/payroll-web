@@ -24,7 +24,7 @@ const menuItemStyles = (theme: Theme): MenuItemStyles => {
       },
       [`&:not(.${menuClasses.subMenuRoot}) > .${menuClasses.button}.${menuClasses.active}`]: {
         color: 'var(--mui-palette-primary-contrastText)',
-        background: '#2c3ce3',
+        background: '#2e7d32',
         [`& .${menuClasses.icon}`]: {
           color: 'inherit'
         }

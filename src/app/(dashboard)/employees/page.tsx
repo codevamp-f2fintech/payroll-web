@@ -6,7 +6,7 @@ import { getServerMode } from '@core/utils/serverHelpers'
 
 const EmployeesPage = () => {
 
-  return <Employees />
+    return <Employees />
 }
 
 export default EmployeesPage

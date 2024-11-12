@@ -8,14 +8,12 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import type { AppDispatch, RootState } from '../../redux/store';
 import { addOrUpdateEmployee } from '@/redux/features/employees/employeesSlice';
-import { fetchDesignations } from '@/redux/features/designation/designationSlice';
 
 import { utility } from '@/utility';
 
 import 'react-toastify/dist/ReactToastify.css';
 
 const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }) => {
-  const { designations } = useSelector((state: RootState) => state.designations);
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -77,11 +75,6 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
       setIsPasswordFieldVisible(true);
     }
   }, [employee, employees]);
-
-  useEffect(() => {
-    dispatch(fetchDesignations({ page: 1, limit: 0, keyword: "" }));
-
-  }, [])
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show);
 
@@ -434,7 +427,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             {errors.role_priority && <Typography color='error'>{errors.role_priority}</Typography>}
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!errors.designation}>
             <Autocomplete
               id="designation-select"
@@ -454,7 +447,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
               <Typography color="error">{errors.designation}</Typography>
             )}
           </FormControl>
-        </Grid>
+        </Grid> */}
 
         <Grid item xs={12} md={6}>
           <TextField

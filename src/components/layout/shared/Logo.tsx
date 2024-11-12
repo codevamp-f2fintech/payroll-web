@@ -34,9 +34,9 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
   const theme = useTheme();
 
   return (
-    <div className='flex items-center min-bs-[24px]'>
-      <MaterioLogo className='text-[10px] text-primary' fillColor={theme.palette.primary.main} strokeColor={theme.palette.text.primary} />
-      <LogoText color={color}>{themeConfig.templateName}</LogoText>
+    <div className='flex items-center min-bs-[50px]'>
+      <MaterioLogo />
+      {/* <LogoText color={color}>{themeConfig.templateName}</LogoText> */}
     </div>
   )
 }

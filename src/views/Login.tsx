@@ -64,12 +64,12 @@ const Login = ({ mode }: { mode: Mode }) => {
 
       const data = await response.json();
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify({
-        id: data.payload.id,
-        role: data.payload.role,
-        desg: data.payload.designation,
-      }));
+      // localStorage.setItem('token', data.token);
+      // localStorage.setItem('user', JSON.stringify({
+      //   id: data.payload.id,
+      //   role: data.payload.role,
+      //   desg: data.payload.designation,
+      // }));
 
       toast.success('Login successful!', {
         position: 'top-center',

@@ -2,14 +2,19 @@
 import { useEffect, useState } from 'react'
 
 import Grid from '@mui/material/Grid'
+import SalaryPackage from '@/views/dashboard/SalaryPackage';
+import OfferLetter from '@/views/dashboard/OfferLetter';
+import IncrementLetter from '@/views/dashboard/IncrementLetter';
+import WarningLetter from '@/views/dashboard/WarningLetter';
+import PaymentHistory from '@/views/dashboard/IncrementLetter';
 
 // Components Imports
-import Award from '@views/dashboard/Award'
-import Transactions from '@views/dashboard/Transactions'
-import UpcomingBirthdays from '@/views/dashboard/UpcomingBirthdays'
-import TotalHolidays from '@/views/dashboard/TotolHolidays'
-import LocationWisePerformer from '@/views/dashboard/LocationWisePerformer'
-import TradingViewWidget from '@views/dashboard/TotalEarning'
+
+// import Transactions from '@views/dashboard/Transactions'
+// import UpcomingBirthdays from '@/views/dashboard/UpcomingBirthdays'
+// import TotalHolidays from '@/views/dashboard/TotolHolidays'
+// import LocationWisePerformer from '@/views/dashboard/LocationWisePerformer'
+// import TradingViewWidget from '@views/dashboard/TotalEarning'
 
 const DashboardAnalytics = () => {
   const [userRole, setUserRole] = useState<string>("");
@@ -25,25 +30,25 @@ const DashboardAnalytics = () => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12} md={6} >
-        <Award />
+        <SalaryPackage />
       </Grid>
       <Grid item xs={12} md={6} lg={6} >
-        <Transactions />
+        <OfferLetter />
       </Grid>
       <Grid item xs={12} md={5} lg={5} >
-        <UpcomingBirthdays />
+        <PaymentHistory />
       </Grid>
       <Grid item xs={12} md={7} lg={7}>
-        <TradingViewWidget />
+        <WarningLetter />
       </Grid>
       {/* <Grid item xs={12} md={6} >
         {userRole !== '' && < TotalLeaves />}
       </Grid> */}
       <Grid item xs={12} md={6} >
-        {userRole !== '' && < LocationWisePerformer />}
+        {/* {userRole !== '' && < LocationWisePerformer />} */}
       </Grid>
       <Grid item xs={12} md={6} >
-        {userRole !== '' && < TotalHolidays />}
+        {/* {userRole !== '' && < TotalHolidays />} */}
       </Grid>
       <Grid item xs={12} lg={8}>
         {/* <DepositWithdraw /> */}

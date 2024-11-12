@@ -3,9 +3,9 @@ const Logo = () => {
     <img
       src="/images/logos/fintech.png"
       alt="New Logo"
-      width="80"
+      width="120"
       style={{ backgroundColor: 'transparent' }}
-      height="90"
+      height="120"
     />
   );
 };
