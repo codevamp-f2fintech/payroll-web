@@ -40,7 +40,6 @@ const UserDropdown = () => {
   // States
   const [open, setOpen] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-
   // Refs
   const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -80,10 +79,10 @@ const UserDropdown = () => {
 
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_EMS_URL}/employees/get/${user.id}`)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/employees/get/${user.id}`)
         const data = await response.json()
 
-        setUserData(data)
+        setUserData(data.data);
 
       } catch (error) {
         console.error("Error fetching user data:", error)
