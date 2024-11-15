@@ -5,14 +5,15 @@ import { configureStore } from '@reduxjs/toolkit';
 import employeesReducer from '@/redux/features/employees/employeesSlice';
 import salaryTemplateReducer from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import salaryComponentReducer from '@/redux/features/salaryComponent/salaryComponentSlice';
-// import SalaryTemplate from '@/views/SalaryTemplate';
+import payrollReducer from '@/redux/features/payroll/payrollSlice'
 
 const store = configureStore({
   reducer: {
     // Add your reducers here
     employees: employeesReducer,
     salaryTemplates: salaryTemplateReducer,
-    salaryComponents: salaryComponentReducer
+    salaryComponents: salaryComponentReducer,
+    payrolls: payrollReducer
   }
 })
 
