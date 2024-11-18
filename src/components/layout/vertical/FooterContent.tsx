@@ -27,7 +27,7 @@ const FooterContent = () => {
 
       maxWidth={false}
       sx={{
-        background: "#2c3ce3",
+        background: "#2e7d32",
 
         // padding: '2rem 1rem', // Adjust padding for responsiveness
         // margin: "0px"

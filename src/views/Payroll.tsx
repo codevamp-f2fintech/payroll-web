@@ -3,44 +3,90 @@ import AddPayrollForm from "@/components/payroll/Payroll.Form"
 import { Box, Button, Dialog, DialogContent, Grid, InputAdornment, TextField, Typography } from "@mui/material"
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
-import { SetStateAction, useMemo, useState } from "react"
+import { SetStateAction, useCallback, useEffect, useMemo, useState } from "react"
 import { DataGrid } from "@mui/x-data-grid"
+import { ToastContainer } from "react-toastify"
+import { fetchPayrolls } from "@/redux/features/payroll/payrollSlice"
+import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, RootState } from "@/redux/store"
+import { debounce } from "lodash"
+
+
 const PayrollGrid = () => {
-  const [selectedFines, setSelectedFines] = useState(null)
+  const dispatch: AppDispatch = useDispatch();
+  const { payrolls, total } = useSelector((state: RootState) => state.payrolls);
+  const { salaryTemplates } = useSelector((state: RootState) => state.salaryTemplates);
+  const [selectedPayrolls, setSelectedPayrolls] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [selectedKeyword, setSelectedKeyword] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
 
+  const debouncedFetch = useCallback(
+    debounce(() => {
+      dispatch(fetchPayrolls({ page, limit, keyword: selectedKeyword }));
+    }, 300),
+    [page, limit, selectedKeyword]
+  );
 
-  const handleAddClick = () => {
-    setSelectedFines(null)
-    setShowForm(true)
-  }
-  const handleCloseForm = () => {
-    setShowForm(false)
-  }
+  useEffect(() => {
+    debouncedFetch();
+    return debouncedFetch.cancel;
+  }, [page, limit, selectedKeyword, debouncedFetch]);
+
+  useEffect(() => {
+    dispatch(fetchSalaryTemplates({ page, limit, keyword: selectedKeyword }));
+  }, [dispatch, page, limit, selectedKeyword]);
+
   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
     setSelectedKeyword(e.target.value)
   }
+  const handlePageChange = (newPage: number, newPageSize: number) => {
+    setPage(newPage + 1);
+    setLimit(newPageSize);
+  };
 
+  const handlePaginationModelChange = (params: { page: number; pageSize: number }) => {
+    handlePageChange(params.page, params.pageSize);
+    debouncedFetch();
+  };
 
+  const handleAddClick = () => {
+    setSelectedPayrolls(null)
+    setShowForm(true)
+  }
+  const handleEditClick = (id: SetStateAction<null>) => {
+    setSelectedPayrolls(id);
+    setShowForm(true);
+  };
+  const handleCloseForm = () => {
+    setShowForm(false)
+  }
+
+  const getTemplateName = (salaryTemplate: any) => {
+    const template = salaryTemplates.find(template => template.id === salaryTemplate);
+    return template ? template.name : '';
+  };
 
   const generateColumns = useMemo(() => {
     return [
-      // ...(userRole === '1' ? [
+
       {
-        field: 'employee_id',
+        field: 'employeeId',
         headerName: 'Employee_id',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
       },
       {
-        field: 'salary',
-        headerName: 'Salary_Template',
+        field: 'salaryTemplate',
+        headerName: 'Salary Template',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        valueGetter: (params) => getTemplateName(params.value),
       },
       {
         field: 'status',
@@ -50,71 +96,42 @@ const PayrollGrid = () => {
         headerClassName: 'super-app-theme--header',
       },
       {
-        field: 'processed',
+        field: 'processedBy',
         headerName: 'ProcessedBy',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
       },
+      {
+        field: 'edit',
+        headerName: 'Edit',
+        sortable: false,
+        width: 150,
+        renderCell: ({ row: { _id } }) => (
+          <Button color="info" variant="contained" onClick={() => handleEditClick(_id)}>
+            Edit
+          </Button>
+        ),
+      },
 
-      // ]:[
-      // {
-      //   field: 'type',
-      //   headerName: 'Type',
-      //   flex: 1,
-      //   headerAlign: 'center',
-      //   headerClassName: 'super-app-theme--header',
-      // },
-      // {
-      //   field: 'application',
-      //   headerName: 'Application',
-      //   flex: 2,
-      //   headerAlign: 'center',
-      //   align: 'center',
-      //   headerClassName: 'super-app-theme--header',
-      // },
-
-      // {
-      //   field: 'status',
-      //   headerName: 'Status',
-      //   flex: 1,
-      //   headerAlign: 'center',
-      //   headerClassName: 'super-app-theme--header',
-      // },
-      // {
-      //   field: 'reason',
-      //   headerName: 'Decision',
-      //   flex: 1,
-      //   headerAlign: 'center',
-      //   headerClassName: 'super-app-theme--header',
-      // }
-      // ])
     ]
-  }, [])
-
-  // const rows = useMemo(() => {
-  //   return leaves
-  //     .filter(leave => leave && leave.day && leave.start_date) // Filter out invalid leaves
-  //     .map(leave => ({
-  //       _id: leave._id,
-  //       start_date: leave.start_date,
-  //       end_date: leave.end_date,
-  //       type: leave.type,
-  //       status: leave.status,
-  //       day: leave.day,
-  //       application: leave.application,
-  //       half_day_period: leave.half_day_period,
-  //       reason: leave.reason || ''
-  //     }))
-  // }, [leaves])
+  }, [salaryTemplates])
   return (
     <>
+      <ToastContainer
+        position="top-center"
+
+      />
       <Dialog open={showForm} onClose={handleCloseForm} fullWidth maxWidth='md'>
         <DialogContent>
           <AddPayrollForm
-            payroll={undefined}
+            payrolls={payrolls}
+            payroll={selectedPayrolls}
             handleClose={handleCloseForm}
-
+            debouncedFetch={debouncedFetch}
+            page={page}
+            limit={limit}
+            selectedKeyword={selectedKeyword}
           />
         </DialogContent>
       </Dialog>
@@ -129,7 +146,7 @@ const PayrollGrid = () => {
         </Box>
         <Box display='flex' alignItems='center'>
           <Button
-            style={{ borderRadius: 50, backgroundColor: '#ff902f' }}
+            style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
             variant='contained'
             color='warning'
             startIcon={<AddIcon />}
@@ -176,7 +193,7 @@ const PayrollGrid = () => {
               alignItems: 'center'
             },
             '& .mui-yrdy0g-MuiDataGrid-columnHeaderRow ': {
-              background: '#2c3ce3 !important',
+              background: '#2e7d32 !important',
               color: 'white'
             },
             '& .MuiDataGrid-cell': {
@@ -189,20 +206,15 @@ const PayrollGrid = () => {
               boxSizing: 'border-box',
             },
           }}
-          // rows={userRole === '1' ? leaves : rows}
+
+          rows={payrolls}
           columns={generateColumns}
-        // getRowId={row => {
-        //   if (userRole === '1') {
-        //     return row._id && row._id._id ? row._id._id : row._id
-        //   } else {
-        //     return row._id
-        //   }
-        // }}
-        // paginationMode='server'
-        // rowCount={total}
-        // onPaginationModelChange={handlePaginationModelChange}
-        // pageSizeOptions={[10, 20, 30]}
-        // paginationModel={{ page: page - 1, pageSize: limit }}
+          getRowId={(row) => row._id}
+          paginationMode='server'
+          rowCount={total}
+          onPaginationModelChange={handlePaginationModelChange}
+          pageSizeOptions={[10, 20, 30]}
+          paginationModel={{ page: page - 1, pageSize: limit }}
         />
       </Box>
     </>
@@ -210,3 +222,6 @@ const PayrollGrid = () => {
 }
 
 export default PayrollGrid
+
+
+
