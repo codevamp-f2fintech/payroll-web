@@ -6,6 +6,7 @@ export interface Payroll {
   salaryTemplate: string;
   status: string;
   processedBy: string;
+  total: number;
 }
 
 interface PayrollState {
@@ -38,7 +39,6 @@ export const fetchPayrolls = createAsyncThunk<{
     if (!response.ok) {
       throw new Error('Failed to fetch payrolls');
     }
-
     return (await response.json()) as { payrolls: Payroll[], total: number };
   }
 )

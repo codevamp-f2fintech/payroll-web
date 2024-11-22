@@ -5,23 +5,25 @@ import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import { SetStateAction, useCallback, useEffect, useMemo, useState } from "react"
 import { DataGrid } from "@mui/x-data-grid"
-import { ToastContainer } from "react-toastify"
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { fetchPayrolls } from "@/redux/features/payroll/payrollSlice"
 import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
-import { debounce } from "lodash"
+import { debounce, template } from "lodash"
 
 
 const PayrollGrid = () => {
   const dispatch: AppDispatch = useDispatch();
   const { payrolls, total } = useSelector((state: RootState) => state.payrolls);
-  const { salaryTemplates } = useSelector((state: RootState) => state.salaryTemplates);
   const [selectedPayrolls, setSelectedPayrolls] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [selectedKeyword, setSelectedKeyword] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  console.log('patroll', payrolls)
 
 
   const debouncedFetch = useCallback(
@@ -36,9 +38,6 @@ const PayrollGrid = () => {
     return debouncedFetch.cancel;
   }, [page, limit, selectedKeyword, debouncedFetch]);
 
-  useEffect(() => {
-    dispatch(fetchSalaryTemplates({ page, limit, keyword: selectedKeyword }));
-  }, [dispatch, page, limit, selectedKeyword]);
 
   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
     setSelectedKeyword(e.target.value)
@@ -65,11 +64,6 @@ const PayrollGrid = () => {
     setShowForm(false)
   }
 
-  const getTemplateName = (salaryTemplate: any) => {
-    const template = salaryTemplates.find(template => template.id === salaryTemplate);
-    return template ? template.name : '';
-  };
-
   const generateColumns = useMemo(() => {
     return [
 
@@ -86,11 +80,25 @@ const PayrollGrid = () => {
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
-        valueGetter: (params) => getTemplateName(params.value),
+        renderCell: (params) => {
+          const name = params.row.salaryTemplate.name
+          return (
+            <Typography>
+              {name}
+            </Typography>
+          )
+        }
       },
       {
         field: 'status',
         headerName: 'Status',
+        flex: 1,
+        headerAlign: 'center',
+        headerClassName: 'super-app-theme--header',
+      },
+      {
+        field: 'total',
+        headerName: 'Total',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
@@ -115,7 +123,7 @@ const PayrollGrid = () => {
       },
 
     ]
-  }, [salaryTemplates])
+  }, [])
   return (
     <>
       <ToastContainer

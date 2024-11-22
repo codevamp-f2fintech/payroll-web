@@ -125,19 +125,64 @@ const SalaryTemplate = () => {
       return isValid;
     };
 
+
+    const updateBaseSalary = (fixedBaseSalary: number, earningIds: string[], deductionIds: string[]) => {
+      // Add earnings
+      const earningsTotal = salaryComponents
+        .filter(comp => earningIds.includes(comp._id))
+        .reduce((sum, comp) => sum + comp.amount, 0);
+
+      // Subtract deductions
+      const deductionsTotal = salaryComponents
+        .filter(comp => deductionIds.includes(comp._id))
+        .reduce((sum, comp) => sum + comp.amount, 0);
+
+      // Calculate the total base salary
+      const updatedBaseSalary = fixedBaseSalary + earningsTotal - deductionsTotal;
+
+      console.log('Base Salary:', fixedBaseSalary);
+      console.log('Earnings Total:', earningsTotal);
+      console.log('Deductions Total:', deductionsTotal);
+      console.log('Updated Base Salary:', updatedBaseSalary);
+
+      // Update form data with the new base salary
+      setFormData(prev => ({
+        ...prev,
+        baseSalary: updatedBaseSalary,
+      }));
+    };
+
+
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
-      setFormData(prevState => ({ ...prevState, [name]: value }));
+
+      if (name === 'baseSalary') {
+        // Update fixed base salary and recalculate
+        const fixedBaseSalary = parseFloat(value) || 0;
+        setFormData(prevState => ({
+          ...prevState,
+          baseSalary: fixedBaseSalary,
+        }));
+        updateBaseSalary(fixedBaseSalary, formData.earningTypes, formData.deductionTypes);
+      } else {
+        setFormData(prevState => ({ ...prevState, [name]: value }));
+      }
     };
+
     const handleEarningTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map((item) => item._id);
-      setFormData((prev) => ({ ...prev, earningTypes: newIds }));
+      const newIds = newValue.map(item => item._id);
+      setFormData(prev => ({ ...prev, earningTypes: newIds }));
+      updateBaseSalary(formData.baseSalary, newIds, formData.deductionTypes);
     };
 
     const handleDeductionTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map((item) => item._id);
-      setFormData((prev) => ({ ...prev, deductionTypes: newIds }));
+      const newIds = newValue.map(item => item._id);
+      setFormData(prev => ({ ...prev, deductionTypes: newIds }));
+      updateBaseSalary(formData.baseSalary, formData.earningTypes, newIds);
     };
+
 
 
     const handleSubmit = () => {
