@@ -1,4 +1,5 @@
-import { PayrollGenerator } from "@/views/PayrollGenerator"
+import PayrollGenerator from "@/views/PayrollGenerator";
+
 
 
 const payroll = () => {

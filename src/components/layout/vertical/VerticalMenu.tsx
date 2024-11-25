@@ -25,6 +25,7 @@ import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Me
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -92,11 +93,14 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
           <MenuItem href={`/payroll`} icon={<EventIcon />}>
             Payroll
           </MenuItem>
-          <MenuItem href={`/salary-template`} icon={<EventIcon />}>
+          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<EventIcon />}>
             Salary Template
-          </MenuItem>
-          <MenuItem href={`/salary-component`} icon={<EventIcon />}>
+          </MenuItem>}
+          {userRole === '1' && <MenuItem href={`/salary-component`} icon={<EventIcon />}>
             Salary Component
+          </MenuItem>}
+          <MenuItem href={`/payroll-generator`} icon={<CurrencyRupeeIcon />}>
+            Payslip-Generator
           </MenuItem>
         </MenuSection>
       </Menu>

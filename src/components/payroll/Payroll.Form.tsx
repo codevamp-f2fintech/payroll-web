@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
-import { Box, Grid, TextField, Typography, IconButton, Button, FormControl, Select, MenuItem, InputLabel, Autocomplete, TableContainer, Table, TableRow, TableCell, TableHead, TableBody, Paper } from '@mui/material';
+import { Box, Grid, TextField, Typography, IconButton, Button, FormControl, Select, MenuItem, InputLabel, Autocomplete, TableContainer, Table, TableRow, TableCell, TableHead, TableBody, Paper, Avatar } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast, ToastContainer } from 'react-toastify'; // Assuming you're using react-toastify for notifications
 import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { fetchSalaryComponents } from '@/redux/features/salaryComponent/salaryComponentSlice'
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
+import { apiResponse } from '@/utility/apiResponse/employeesResponse';
 
 const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, limit, selectedKeyword }) => {
   const dispatch: AppDispatch = useDispatch();
   const { salaryTemplates } = useSelector((state: RootState) => state.salaryTemplates);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [typeDetails, setTypeDetails] = useState({});
 
   const [formData, setFormData] = useState({
@@ -28,6 +30,20 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     status: '',
     processedBy: '',
   });
+
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const employeesData = await apiResponse(); // Fetch employees from your API
+        setEmployees(employeesData); // Set the employees data
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
 
 
   useEffect(() => {
@@ -77,7 +93,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
 
       if (selected) {
         setFormData({
-          employeeId: selected.employeeId,
+          employeeId: selected.employeeId?._id || selected.employeeId || '',
           salaryTemplate: selected.salaryTemplate, // Add salaryTemplate
           status: selected.status,
           processedBy: selected.processedBy,
@@ -189,17 +205,31 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
         </IconButton>
       </Box>
       <Grid container spacing={3}>
+        {/* Employee Selection */}
         <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Employee ID'
-            name='employeeId'
-            value={formData.employeeId}
-            onChange={handleChange}
+          <Autocomplete
+            options={employees}
+            getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
+            renderOption={(props, option) => (
+              <li {...props}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar src={option.image} alt={option.first_name} sx={{ marginRight: 2 }} />
+                  <Typography>{option.first_name} {option.last_name}</Typography>
+                </Box>
+              </li>
+            )}
+            renderInput={(params) => <TextField {...params} label="Employee" variant="outlined" />}
+            value={employees.find(emp => emp._id === formData.employeeId) || null}
+            onChange={(event, newValue) => {
+              setFormData({
+                ...formData,
+                employeeId: newValue ? newValue._id : ''
+              });
+            }}
+            isOptionEqualToValue={(option, value) => option._id === value._id}
             required
             error={!!errors.employeeId}
             helperText={errors.employeeId}
-            FormHelperTextProps={{ style: { color: 'red' } }}
           />
         </Grid>
         <Grid item xs={12} md={6}>

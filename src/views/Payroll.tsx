@@ -23,6 +23,9 @@ const PayrollGrid = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userRole = user?.role;
+
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -71,14 +74,29 @@ const PayrollGrid = () => {
   };
 
   const generateColumns = useMemo(() => {
-    return [
-
+    // Conditionally render the Edit column based on userRole
+    const columns = [
       {
         field: 'employeeId',
-        headerName: 'Employee_id',
+        headerName: 'Employee Name',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        renderCell: (params) => {
+          const employee = params.row.employee;
+          return employee
+            ? (
+              <div>
+                <img
+                  src={employee.image}
+                  alt={`${employee.first_name} ${employee.last_name}`}
+                  style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
+                />
+                {employee.first_name} {employee.last_name}
+              </div>
+            )
+            : 'N/A';
+        },
       },
       {
         field: 'salaryTemplate',
@@ -102,7 +120,11 @@ const PayrollGrid = () => {
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
       },
-      {
+    ];
+
+    // Only add the Edit column if the user role is '1'
+    if (userRole === '1') {
+      columns.push({
         field: 'edit',
         headerName: 'Edit',
         sortable: false,
@@ -112,10 +134,12 @@ const PayrollGrid = () => {
             Edit
           </Button>
         ),
-      },
+      });
+    }
 
-    ]
-  }, [salaryTemplates])
+    return columns;
+  }, [salaryTemplates, userRole]);
+
   return (
     <>
       <ToastContainer
@@ -144,7 +168,7 @@ const PayrollGrid = () => {
             Dashboard / Payroll
           </Typography>
         </Box>
-        <Box display='flex' alignItems='center'>
+        {userRole === '1' && <Box display='flex' alignItems='center'>
           <Button
             style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
             variant='contained'
@@ -155,7 +179,7 @@ const PayrollGrid = () => {
             Add Payroll
           </Button>
 
-        </Box>
+        </Box>}
       </Box>
       <Grid container spacing={6} alignItems='center' mb={2}>
 
