@@ -1,5 +1,5 @@
-'use client'
-import React from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -16,7 +16,15 @@ import WorkIcon from '@mui/icons-material/Work';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 
-// Styled Components
+// Define the interface for salary details
+interface SalaryDetail {
+    _id: string;
+    salarytype: string;
+    type: string;
+    amount: number;
+    description: string;
+}
+
 const StyledCard = styled(Card)(({ theme }) => ({
     maxWidth: 1200,
     margin: '2rem auto',
@@ -39,49 +47,77 @@ const StyledCardHeader = styled(CardHeader)(({ theme }) => ({
     },
 }));
 
-const CategoryCard = styled(Card)(({ theme }) => ({
-    height: '100%',
-    position: 'relative',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: theme.shadows[8],
-        '& .arrow-icon': {
-            opacity: 1,
-        },
-    },
-}));
-
-const IconContainer = styled(Box)(({ bgcolor }) => ({
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: bgcolor,
-    marginBottom: 16,
-}));
-
-const ArrowIcon = styled(NorthEastIcon)({
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    opacity: 0,
-    transition: 'opacity 0.3s ease',
-});
-
 const SalaryPackage = () => {
-    const salaryDetails = {
-        basic: 50000,
-        hra: 20000,
-        allowances: 10000,
-        bonus: 5000,
-    };
+    const [salaryDetails, setSalaryDetails] = useState<SalaryDetail[]>([]);
+    const [totalSalary, setTotalSalary] = useState(0);
 
-    const totalSalary = Object.values(salaryDetails).reduce((a, b) => a + b, 0);
+    useEffect(() => {
+        const fetchSalaryDetails = async () => {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const employeeId = user?.id;
 
-    const formatCurrency = (amount) => {
+                if (!employeeId) {
+                    console.error('Employee ID not found in local storage');
+                    return;
+                }
+
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_APP_URL}/payroll/${employeeId}/earnings`
+                );
+                const result = await response.json();
+
+                if (result.success) {
+                    const earnings = result.data.earnings;
+                    const total = earnings.reduce((sum, earning) => sum + earning.amount, 0);
+
+                    setSalaryDetails(earnings);
+                    setTotalSalary(total);
+                }
+            } catch (error) {
+                console.error('Error fetching salary details:', error);
+            }
+        };
+
+        fetchSalaryDetails();
+    }, []);
+
+    const categories = salaryDetails.map((item) => ({
+        label: item.type,
+        amount: item.amount,
+        icon:
+            item.type === 'Basic salary'
+                ? AttachMoneyIcon
+                : item.type === 'HRA'
+                    ? HomeIcon
+                    : item.type === 'Allowances'
+                        ? WorkIcon
+                        : item.type === 'Medical allowance'
+                            ? CardGiftcardIcon
+                            : NorthEastIcon,
+        bgcolor:
+            item.type === 'Basic salary'
+                ? 'rgba(25, 118, 210, 0.1)'
+                : item.type === 'HRA'
+                    ? 'rgba(46, 125, 50, 0.1)'
+                    : item.type === 'Allowances'
+                        ? 'rgba(245, 124, 0, 0.1)'
+                        : item.type === 'Medical allowance'
+                            ? 'rgba(0, 188, 212, 0.1)'
+                            : 'rgba(156, 39, 176, 0.1)',
+        iconColor:
+            item.type === 'Basic salary'
+                ? 'primary'
+                : item.type === 'HRA'
+                    ? 'success'
+                    : item.type === 'Allowances'
+                        ? 'warning'
+                        : item.type === 'Medical allowance'
+                            ? 'info'
+                            : 'secondary',
+    }));
+
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency: 'INR',
@@ -89,48 +125,19 @@ const SalaryPackage = () => {
         }).format(amount);
     };
 
-    const categories = [
-        {
-            label: 'Basic Salary',
-            amount: salaryDetails.basic,
-            icon: AttachMoneyIcon,
-            bgcolor: 'rgba(25, 118, 210, 0.1)',
-            iconColor: 'primary',
-        },
-        {
-            label: 'HRA',
-            amount: salaryDetails.hra,
-            icon: HomeIcon,
-            bgcolor: 'rgba(46, 125, 50, 0.1)',
-            iconColor: 'success',
-        },
-        {
-            label: 'Allowances',
-            amount: salaryDetails.allowances,
-            icon: WorkIcon,
-            bgcolor: 'rgba(245, 124, 0, 0.1)',
-            iconColor: 'warning',
-        },
-        {
-            label: 'Bonus',
-            amount: salaryDetails.bonus,
-            icon: CardGiftcardIcon,
-            bgcolor: 'rgba(156, 39, 176, 0.1)',
-            iconColor: 'secondary',
-        },
-    ];
-
     return (
         <StyledCard>
             <StyledCardHeader
                 title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography color='white' variant="h4">Salary Package Breakdown</Typography>
+                        <Typography color="white" variant="h4">
+                            Compensation Details
+                        </Typography>
                         <Box textAlign="right">
-                            <Typography color='white' variant="subtitle1" sx={{ opacity: 0.8 }}>
+                            {/* <Typography color="white" variant="subtitle1" sx={{ opacity: 0.8 }}>
                                 Total Package
-                            </Typography>
-                            <Typography color='white' variant="h4" sx={{ fontWeight: 'bold' }}>
+                            </Typography> */}
+                            <Typography color="white" variant="h4" sx={{ fontWeight: 'bold' }}>
                                 {formatCurrency(totalSalary)}
                             </Typography>
                         </Box>
@@ -143,23 +150,15 @@ const SalaryPackage = () => {
                         const IconComponent = category.icon;
                         return (
                             <Grid item xs={12} md={6} key={index}>
-                                <CategoryCard>
+                                <Card>
                                     <CardContent>
-                                        <ArrowIcon className="arrow-icon" color="action" />
-                                        <IconContainer bgcolor={category.bgcolor}>
+                                        <Box bgcolor={category.bgcolor} p={1} borderRadius={2}>
                                             <IconComponent color={category.iconColor} />
-                                        </IconContainer>
-                                        <Typography variant="subtitle1" color="textSecondary">
-                                            {category.label}
-                                        </Typography>
-                                        <Typography variant="h4" sx={{ my: 1, fontWeight: 'bold' }}>
-                                            {formatCurrency(category.amount)}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary">
-                                            {((category.amount / totalSalary) * 100).toFixed(1)}% of total
-                                        </Typography>
+                                        </Box>
+                                        <Typography>{category.label}</Typography>
+                                        <Typography>{formatCurrency(category.amount)}</Typography>
                                     </CardContent>
-                                </CategoryCard>
+                                </Card>
                             </Grid>
                         );
                     })}

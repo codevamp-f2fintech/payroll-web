@@ -5,235 +5,252 @@ import {
     CardContent,
     CardHeader,
     Typography,
-    List,
-    ListItem,
-    ListItemText,
+    Grid,
     Box,
+    LinearProgress,
     Button,
-    styled,
+    styled
 } from '@mui/material';
 import {
-    CalendarToday,
-    Warning,
-    TrackChanges,
-    Description,
-    CheckCircle
+    School,
+    LibraryBooks,
+    EmojiEvents,
+    CastForEducation,
+    Verified
 } from '@mui/icons-material';
 
-const StyledCard = styled(Card)`
-    max-width: 800px;
-    margin: 2rem auto;
+const LearningCard = styled(Card)`
     background: linear-gradient(to right bottom, #ffffff, #f8f9fa);
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    position: relative;
-`;
-
-const StyledCardHeader = styled(CardHeader)`
-    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-        
-    .MuiCardHeader-title {
-        color: white;
-        font-size: 1.8rem;
-        font-weight: 600;
-        text-align: center;
-    }
-
-    .MuiCardHeader-subheader {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.1rem;
-        text-align: center;
-        margin-top: 0.5rem;
-    }
-`;
-
-const StyledListItem = styled(ListItem)`
-    padding: 1.5rem;
-    border-left: 4px solid ${props => props.bordercolor || '#2e7d32'};
-    margin: 1rem;
-    background: white;
-    border-radius: 0 10px 10px 0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     
     &:hover {
-        transform: translateX(5px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     }
 `;
 
-const IconWrapper = styled(Box)`
-    background-color: ${props => props.bgcolor || '#e8f5e9'};
-    color: ${props => props.iconcolor || '#2e7d32'};
+const LearningHeader = styled(CardHeader)`
+    background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
+    
+    .MuiCardHeader-title {
+        color: white;
+        font-weight: 600;
+        font-size: 1.4rem;
+    }
+`;
+
+const LearningBox = styled(Box)`
+    background-color: #f3e5f5;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+`;
+
+const LearningIcon = styled(Box)`
+    background-color: ${props => props.bgcolor || '#f3e5f5'};
+    color: ${props => props.iconcolor || '#8e24aa'};
     width: 48px;
     height: 48px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 1rem;
-    transition: transform 0.3s ease;
+`;
 
-    &:hover {
-        transform: scale(1.1);
+const ProgressBar = styled(LinearProgress)`
+    height: 10px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    
+    .MuiLinearProgress-bar {
+        background: linear-gradient(to right, #8e24aa, #6a1b9a);
     }
 `;
 
-const Label = styled(Typography)`
-    font-weight: 600;
-    color: #2e7d32;
-    margin-bottom: 0.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-`;
-
-const Value = styled(Typography)`
-    font-size: 1.1rem;
-    color: #37474f;
-    line-height: 1.6;
-`;
-
-const ViewButton = styled(Button)`
+const CertificateButton = styled(Button)`
     && {
-        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
         color: white;
         padding: 0.5rem 1.5rem;
         border-radius: 25px;
         text-transform: none;
-        font-size: 1rem;
         margin-top: 0.5rem;
         transition: all 0.3s ease;
         
         &:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+            box-shadow: 0 5px 15px rgba(142, 36, 170, 0.3);
         }
     }
 `;
 
-const NoWarningContainer = styled(Box)`
-    text-align: center;
-    padding: 3rem;
-    background: #f8faf8;
-    border-radius: 20px;
-`;
-
-const StatusBadge = styled(Box)`
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    background: ${props => props.active ? '#ffebee' : '#e8f5e9'};
-    color: ${props => props.active ? '#c62828' : '#2e7d32'};
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-`;
-
 const WarningLetter = () => {
-    const warningDetails = {
-        hasWarning: true, // Change to false if there's no warning
-        issueDate: '2023-10-15',
-        reason: 'Attendance Issues',
-        improvementPlan: 'Must improve punctuality within 30 days. Expected to maintain at least 90% attendance rate and arrive no later than 9:15 AM for morning shifts.',
-        warningLetterLink: '/path/to/warning-letter.pdf',
+    // Sample learning and development data
+    const learningData = {
+        currentLearningPaths: [
+            {
+                title: 'Advanced Project Management',
+                progress: 65,
+                platform: 'LinkedIn Learning'
+            },
+            {
+                title: 'Data Analytics Fundamentals',
+                progress: 45,
+                platform: 'Coursera'
+            }
+        ],
+        completedCertifications: [
+            {
+                name: 'Agile Scrum Master',
+                issuer: 'Scrum Alliance',
+                date: 'September 2023'
+            },
+            {
+                name: 'Cloud Computing Basics',
+                issuer: 'AWS Certification',
+                date: 'June 2023'
+            }
+        ],
+        trainingBudget: {
+            used: 1200,
+            total: 2000
+        },
+        upcomingWorkshops: [
+            {
+                title: 'Leadership Communication Skills',
+                date: 'December 15, 2024',
+                time: '2:00 PM - 5:00 PM'
+            }
+        ]
     };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    if (!warningDetails.hasWarning) {
-        return (
-            <StyledCard elevation={3}>
-                <StyledCardHeader title="Performance Status" />
-                <CardContent>
-                    <NoWarningContainer>
-                        <IconWrapper bgcolor="#e8f5e9" iconcolor="#2e7d32" style={{ margin: '0 auto 1rem auto' }}>
-                            <CheckCircle fontSize="large" />
-                        </IconWrapper>
-                        <Typography variant="h6" color="#2e7d32" gutterBottom>
-                            Good Standing
-                        </Typography>
-                        <Typography color="textSecondary">
-                            No warnings or performance improvement plans are currently active.
-                        </Typography>
-                    </NoWarningContainer>
-                </CardContent>
-            </StyledCard>
-        );
-    }
 
     return (
-        <StyledCard elevation={3}>
-            <StatusBadge active={true}>
-                <Warning fontSize="small" />
-                Active Warning
-            </StatusBadge>
-            <StyledCardHeader
-                title="Performance Improvement Notice"
-                subheader="Please review the details below carefully"
+        <LearningCard elevation={3}>
+            <LearningHeader
+
+                title="Learning & Development"
+                subheader="Your continuous growth journey"
             />
             <CardContent>
-                <List disablePadding>
-                    <StyledListItem bordercolor="#ffd54f">
-                        <IconWrapper bgcolor="#fff8e1" iconcolor="#f57f17">
-                            <CalendarToday />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Issue Date</Label>}
-                            secondary={<Value>{formatDate(warningDetails.issueDate)}</Value>}
-                        />
-                    </StyledListItem>
-                    <StyledListItem bordercolor="#ef5350">
-                        <IconWrapper bgcolor="#ffebee" iconcolor="#c62828">
-                            <Warning />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Reason for Notice</Label>}
-                            secondary={<Value>{warningDetails.reason}</Value>}
-                        />
-                    </StyledListItem>
-                    <StyledListItem bordercolor="#2e7d32">
-                        <IconWrapper bgcolor="#e8f5e9" iconcolor="#2e7d32">
-                            <TrackChanges />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Improvement Plan</Label>}
-                            secondary={<Value>{warningDetails.improvementPlan}</Value>}
-                        />
-                    </StyledListItem>
-                    <StyledListItem bordercolor="#1976d2">
-                        <IconWrapper bgcolor="#e3f2fd" iconcolor="#1976d2">
-                            <Description />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Documentation</Label>}
-                            secondary={
-                                <ViewButton
+                <Grid container spacing={3}>
+                    {/* Current Learning Paths */}
+                    <Grid item xs={12}>
+                        <LearningBox>
+                            <LearningIcon bgcolor="#f3e5f5" iconcolor="#8e24aa">
+                                <School />
+                            </LearningIcon>
+                            <Box width="100%">
+                                <Typography variant="subtitle1" fontWeight="bold">
+                                    Current Learning Paths
+                                </Typography>
+                                {learningData.currentLearningPaths.map((path, index) => (
+                                    <Box key={index} mb={1}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2">
+                                                {path.title} ({path.platform})
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary">
+                                                {path.progress}%
+                                            </Typography>
+                                        </Box>
+                                        <ProgressBar
+                                            variant="determinate"
+                                            value={path.progress}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+                        </LearningBox>
+                    </Grid>
+
+                    {/* Completed Certifications */}
+                    <Grid item xs={12}>
+                        <LearningBox>
+                            <LearningIcon bgcolor="#e8eaf6" iconcolor="#3f51b5">
+                                <EmojiEvents />
+                            </LearningIcon>
+                            <Box>
+                                <Typography variant="subtitle1" fontWeight="bold">
+                                    Completed Certifications
+                                </Typography>
+                                {learningData.completedCertifications.map((cert, index) => (
+                                    <Box key={index} display="flex" alignItems="center" gap={1} mb={1}>
+                                        <Verified color="success" />
+                                        <Typography variant="body2">
+                                            {cert.name}
+                                            <Typography variant="caption" color="textSecondary" ml={1}>
+                                                ({cert.issuer}, {cert.date})
+                                            </Typography>
+                                        </Typography>
+                                    </Box>
+                                ))}
+                                <CertificateButton
                                     variant="contained"
-                                    href={warningDetails.warningLetterLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    startIcon={<Description />}
+                                    startIcon={<LibraryBooks />}
                                 >
-                                    View Complete Notice
-                                </ViewButton>
-                            }
-                        />
-                    </StyledListItem>
-                </List>
+                                    View All Certificates
+                                </CertificateButton>
+                            </Box>
+                        </LearningBox>
+                    </Grid>
+
+                    {/* Training Budget */}
+                    <Grid item xs={12} md={6}>
+                        <LearningBox>
+                            <LearningIcon bgcolor="#e3f2fd" iconcolor="#2196f3">
+                                <CastForEducation />
+                            </LearningIcon>
+                            <Box width="100%">
+                                <Typography variant="subtitle1" fontWeight="bold">
+                                    Training Budget
+                                </Typography>
+                                <Box display="flex" justifyContent="space-between">
+                                    <Typography variant="body2">
+                                        Used: ${learningData.trainingBudget.used}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        Total: ${learningData.trainingBudget.total}
+                                    </Typography>
+                                </Box>
+                                <ProgressBar
+                                    variant="determinate"
+                                    value={(learningData.trainingBudget.used / learningData.trainingBudget.total) * 100}
+                                />
+                            </Box>
+                        </LearningBox>
+                    </Grid>
+
+                    {/* Upcoming Workshops */}
+                    <Grid item xs={12} md={6}>
+                        <LearningBox>
+                            <LearningIcon bgcolor="#e8f5e9" iconcolor="#4caf50">
+                                <School />
+                            </LearningIcon>
+                            <Box>
+                                <Typography variant="subtitle1" fontWeight="bold">
+                                    Upcoming Workshops
+                                </Typography>
+                                {learningData.upcomingWorkshops.map((workshop, index) => (
+                                    <Box key={index}>
+                                        <Typography variant="body2">
+                                            {workshop.title}
+                                        </Typography>
+                                        <Typography variant="caption" color="textSecondary">
+                                            {workshop.date} | {workshop.time}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </LearningBox>
+                    </Grid>
+                </Grid>
             </CardContent>
-        </StyledCard>
+        </LearningCard>
     );
 };
 
