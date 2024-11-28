@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -109,13 +109,9 @@ const WelcomeMessage = styled(Typography)`
 `;
 
 const OfferLetter = () => {
-    const offerDetails = {
-        employeeName: 'John Doe',
-        position: 'Software Engineer',
-        joiningDate: '2023-11-01',
-        department: 'IT',
-        offerLetterLink: '/path/to/offer-letter.pdf',
-    };
+    const [userData, setUserData] = useState<any>(null);
+    const [userRole, setUserRole] = useState<string>("");
+    const [loading, setLoading] = useState<boolean>(true); // Loading state
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -124,6 +120,49 @@ const OfferLetter = () => {
             day: 'numeric'
         });
     };
+
+
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/employees/get/${user.id}`);
+                const result = await response.json();
+                console.log('Fetched Data:', result);
+
+                // Set userData with the extracted `data` field
+                if (result.success) {
+                    setUserData(result.data);
+                } else {
+                    console.error('Failed to fetch user data:', result.message || 'Unknown error');
+                }
+                setLoading(false); // Set loading to false
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                setLoading(false); // Handle errors gracefully
+            }
+        };
+
+        if (user.id) {
+            fetchUserData();
+        } else {
+            setLoading(false); // No user ID in localStorage, stop loading
+        }
+    }, []);
+
+
+
+    if (loading) {
+        return <Typography align="center">Loading...</Typography>; // Display while loading
+    }
+
+    if (!userData) {
+        return <Typography align="center">No user data found.</Typography>; // Handle no data scenario
+    }
+
+
+
 
     return (
         <StyledCard elevation={5}>
@@ -135,7 +174,7 @@ const OfferLetter = () => {
                             We're excited to have you join our team
                         </WelcomeMessage>
                         <Typography variant="h5" color="white" fontWeight="500">
-                            {offerDetails.employeeName}
+                            {userData?.first_name} {userData?.last_name}
                         </Typography>
                     </>
                 }
@@ -148,44 +187,17 @@ const OfferLetter = () => {
                         </IconWrapper>
                         <ListItemText
                             primary={<Label>Position</Label>}
-                            secondary={<Value>{offerDetails.position}</Value>}
+                            secondary={<Value>{userData?.designation}</Value>}
                         />
                     </StyledListItem>
-                    <StyledListItem>
-                        <IconWrapper bgcolor="#f1f8e9" iconcolor="#558b2f">
-                            <Business />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Department</Label>}
-                            secondary={<Value>{offerDetails.department}</Value>}
-                        />
-                    </StyledListItem>
+
                     <StyledListItem>
                         <IconWrapper bgcolor="#e0f2f1" iconcolor="#00695c">
                             <CalendarToday />
                         </IconWrapper>
                         <ListItemText
                             primary={<Label>Joining Date</Label>}
-                            secondary={<Value>{formatDate(offerDetails.joiningDate)}</Value>}
-                        />
-                    </StyledListItem>
-                    <StyledListItem>
-                        <IconWrapper bgcolor="#f9fbe7" iconcolor="#827717">
-                            <Description />
-                        </IconWrapper>
-                        <ListItemText
-                            primary={<Label>Offer Letter</Label>}
-                            secondary={
-                                <ViewButton
-                                    variant="contained"
-                                    href={offerDetails.offerLetterLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    startIcon={<Description />}
-                                >
-                                    View Offer Letter
-                                </ViewButton>
-                            }
+                            secondary={<Value>{formatDate(userData?.joining_date)}</Value>}
                         />
                     </StyledListItem>
                 </List>

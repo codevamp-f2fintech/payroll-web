@@ -1,5 +1,6 @@
-'use client'
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import {
     Card,
@@ -12,6 +13,17 @@ import {
 } from '@mui/material';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+
+// Define TypeScript type for payment history data
+type Payment = {
+    payrollId: string;
+    salaryTemplateName: string;
+    createdAt: string;
+    processedBy: string;
+    totalSalary: number;
+    baseSalary: number;
+    status: string;
+};
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -46,75 +58,28 @@ const StatusChip = styled(Chip)(({ status, theme }) => ({
     borderRadius: '6px',
     fontWeight: 500,
     backgroundColor:
-        status === 'Completed' ? '#e8f5e9' :
-            status === 'Pending' ? '#fff3e0' :
-                status === 'Processing' ? '#e3f2fd' : '#ffebee',
+        status === 'paid'
+            ? '#e8f5e9'
+            : status === 'pending'
+                ? '#fff3e0'
+                : status === 'processed'
+                    ? '#e3f2fd'
+                    : '#ffebee',
     color:
-        status === 'Completed' ? '#2e7d32' :
-            status === 'Pending' ? '#e65100' :
-                status === 'Processing' ? '#1565c0' : '#c62828',
+        status === 'paid'
+            ? '#2e7d32'
+            : status === 'pending'
+                ? '#e65100'
+                : status === 'processed'
+                    ? '#1565c0'
+                    : '#c62828',
 }));
 
 const PaymentHistory = () => {
-    // Dummy payment history data
-    const paymentHistory = [
-        {
-            id: 1,
-            date: '2024-03-01',
-            type: 'Salary',
-            amount: 55000,
-            status: 'Completed',
-            reference: 'SAL-MAR-2024',
-            account: 'HDFC-XXXX4589'
-        },
-        {
-            id: 2,
-            date: '2024-02-01',
-            type: 'Salary',
-            amount: 55000,
-            status: 'Completed',
-            reference: 'SAL-FEB-2024',
-            account: 'HDFC-XXXX4589'
-        },
-        {
-            id: 3,
-            date: '2024-01-15',
-            type: 'Performance Bonus',
-            amount: 25000,
-            status: 'Completed',
-            reference: 'BON-2024-Q1',
-            account: 'HDFC-XXXX4589'
-        },
-        {
-            id: 4,
-            date: '2024-01-01',
-            type: 'Salary',
-            amount: 50000,
-            status: 'Completed',
-            reference: 'SAL-JAN-2024',
-            account: 'HDFC-XXXX4589'
-        },
-        {
-            id: 5,
-            date: '2023-12-25',
-            type: 'Holiday Bonus',
-            amount: 10000,
-            status: 'Completed',
-            reference: 'BON-HOL-2023',
-            account: 'HDFC-XXXX4589'
-        },
-        {
-            id: 6,
-            date: '2024-04-01',
-            type: 'Salary',
-            amount: 55000,
-            status: 'Processing',
-            reference: 'SAL-APR-2024',
-            account: 'HDFC-XXXX4589'
-        }
-    ];
+    const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const formatCurrency = (amount) => {
+    const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency: 'INR',
@@ -122,24 +87,56 @@ const PaymentHistory = () => {
         }).format(amount);
     };
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'long',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
+
+    useEffect(() => {
+        const fetchPaymentHistory = async () => {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const response = await fetch(
+                    `${process.env.NEXT_PUBLIC_APP_URL}/payroll/${user.id}/salary-summary`
+                );
+                const result = await response.json();
+
+                if (result.success) {
+                    setPaymentHistory(result.data);
+                } else {
+                    console.error('Failed to fetch payment history:', result.message);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPaymentHistory();
+    }, []);
+
+    if (loading) {
+        return <Typography align="center">Loading...</Typography>;
+    }
+
+    if (!paymentHistory.length) {
+        return <Typography align="center">No payment history found.</Typography>;
+    }
 
     return (
         <StyledCard>
             <HeaderSection>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <PaymentsIcon sx={{ color: 'white', fontSize: 32 }} />
-                    <Typography color='white' variant="h4" component="h1">
+                    <Typography color="white" variant="h4" component="h1">
                         Payment History
                     </Typography>
                 </Box>
-                <Typography color='white' variant="subtitle1">
+                <Typography color="white" variant="subtitle1">
                     Track all your salary and bonus payments
                 </Typography>
             </HeaderSection>
@@ -147,33 +144,41 @@ const PaymentHistory = () => {
             <CardContent sx={{ padding: 4 }}>
                 <Grid container spacing={2}>
                     {paymentHistory.map((payment) => (
-                        <Grid item xs={12} key={payment.id}>
+                        <Grid item xs={12} key={payment.payrollId}>
                             <PaymentCard>
                                 <Box>
                                     <Typography variant="h6" gutterBottom>
-                                        {payment.type}
+                                        {payment.salaryTemplateName}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        {formatDate(payment.date)}
+                                        {formatDate(payment.createdAt)}
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                                         <AccountBalanceIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                                         <Typography variant="body2" color="text.secondary">
-                                            {payment.account}
+                                            Processed By: {payment.processedBy}
                                         </Typography>
                                     </Box>
                                 </Box>
                                 <Box sx={{ textAlign: 'right' }}>
-                                    <Typography variant="h6" gutterBottom sx={{ color: '#2e7d32' }}>
-                                        {formatCurrency(payment.amount)}
+                                    <Typography
+                                        variant="h6"
+                                        gutterBottom
+                                        sx={{ color: '#2e7d32' }}
+                                    >
+                                        {formatCurrency(payment.totalSalary)}
                                     </Typography>
                                     <StatusChip
                                         label={payment.status}
                                         status={payment.status}
                                         size="small"
                                     />
-                                    <Typography variant="caption" display="block" sx={{ mt: 1, color: 'text.secondary' }}>
-                                        Ref: {payment.reference}
+                                    <Typography
+                                        variant="caption"
+                                        display="block"
+                                        sx={{ mt: 1, color: 'text.secondary' }}
+                                    >
+                                        Base Salary: {formatCurrency(payment.baseSalary)}
                                     </Typography>
                                 </Box>
                             </PaymentCard>

@@ -82,6 +82,11 @@ export const PayrollGenerator = () => {
     return debouncedFetch.cancel // Cleanup on component unmount
   }, [selectedKeyword, selectedMonth, debouncedFetch])
 
+  const handlePaginationModelChange = (params: { page: number; pageSize: number }) => {
+    setPage(params.page + 1) // Adjust for 0-based indexing in DataGrid
+    setLimit(params.pageSize)
+  }
+
   const handleMonthChange = event => {
     setSelectedMonth(event.target.value)
     setSelectedEmployee(null)
@@ -302,13 +307,12 @@ export const PayrollGenerator = () => {
                   {
                     // Get the last day of the selected month
                     (() => {
-                      const date = new Date(new Date().getFullYear(), selectedMonth, 0); // Get last date of the selected month
-                      return `${date.getDate()}/${selectedMonth}/${date.getFullYear()}`;
+                      const date = new Date(new Date().getFullYear(), selectedMonth, 0) // Get last date of the selected month
+                      return `${date.getDate()}/${selectedMonth}/${date.getFullYear()}`
                     })()
                   }
                 </Typography>
               </Box>
-
 
               {/* Pay Period */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -319,8 +323,6 @@ export const PayrollGenerator = () => {
                   )}
                 </Typography>
               </Box>
-
-
             </Grid>
 
             <Grid sx={{ margin: '0 auto' }} item xs={12} sm={6} md={4}>
@@ -475,7 +477,7 @@ export const PayrollGenerator = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     fontWeight: 'bold',
-                    borderRadius: '8px',
+                    borderRadius: '8px'
                   }}
                 >
                   <Typography sx={{ fontWeight: 'bold' }}>Gross Earnings:</Typography>
@@ -492,7 +494,7 @@ export const PayrollGenerator = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     fontWeight: 'bold',
-                    borderRadius: '8px',
+                    borderRadius: '8px'
                   }}
                 >
                   <Typography sx={{ fontWeight: 'bold' }}>Total Deductions:</Typography>
@@ -501,7 +503,6 @@ export const PayrollGenerator = () => {
               </Grid>
             </Grid>
           </Grid>
-
 
           {/* Total Net Pay */}
           <Grid item xs={12} sx={{ mt: 3 }}>
@@ -544,13 +545,12 @@ export const PayrollGenerator = () => {
               // fontStyle: 'italic',
               color: '#6a6a6a',
               marginTop: 4,
-              fontSize: '14px', // Slightly smaller font size for a subtle effect
+              fontSize: '14px' // Slightly smaller font size for a subtle effect
             }}
           >
-            -- This document is system-generated and does not require a physical signature.
-            It is valid for all official purposes.
+            -- This document is system-generated and does not require a physical signature. It is valid for all official
+            purposes.
           </Typography>
-
         </Paper>
       </div>
     )
@@ -560,19 +560,19 @@ export const PayrollGenerator = () => {
     {
       field: 'employee',
       headerName: 'Employee',
-      width: 250,
-      renderCell: (params) => {
-        const { first_name, last_name, image } = params.row; // Access employee data
+      width: 200,
+      renderCell: params => {
+        const { first_name, last_name, image } = params.row // Access employee data
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Avatar src={image} alt={`${first_name} ${last_name}`} sx={{ marginRight: 2 }} />
-            <Typography variant="body2">
+            <Typography variant='body2'>
               {first_name} {last_name}
             </Typography>
           </Box>
-        );
-      },
+        )
+      }
     },
 
     { field: 'code', headerName: 'Employee Code', width: 150 },
@@ -685,18 +685,41 @@ export const PayrollGenerator = () => {
           />
         </Grid>
       </Grid>
-      <div style={{ height: 400, width: '100%' }}>
+      <div>
         <DataGrid
-          rows={transformedPayrolls}
           sx={{
+            height: 600,
+            '& .super-app-theme--header': {
+              fontSize: 17,
+              fontWeight: 600,
+              alignItems: 'center'
+            },
             '& .mui-yrdy0g-MuiDataGrid-columnHeaderRow ': {
               background: '#2e7d32 !important',
               color: 'white'
+            },
+            '& .MuiDataGrid-cell': {
+              fontSize: '10',
+              align: 'center'
+            },
+            '& .MuiDataGrid-row': {
+              fontWeight: '600',
+              fontSize: '14px',
+              boxSizing: 'border-box'
             }
           }}
+          rows={transformedPayrolls}
           columns={columns}
-          pageSize={5}
-          getRowId={row => row.id} // Use the transformed id
+          getRowId={row => row.id} // Ensure unique row identification
+          pageSize={limit} // Set page size dynamically from state
+          paginationMode='server' // Enable server-side pagination
+          rowCount={total} // Total number of rows for pagination
+          onPaginationModelChange={params => {
+            setPage(params.page + 1) // Update page number
+            setLimit(params.pageSize) // Update page size
+          }}
+          paginationModel={{ page: page - 1, pageSize: limit }}
+          pageSizeOptions={[5, 10, 20, 50]} // Provide page size options
         />
       </div>
       {selectedEmployee && (

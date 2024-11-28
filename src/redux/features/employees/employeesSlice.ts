@@ -75,7 +75,7 @@ export const fetchEmployees = createAsyncThunk(
         }
 
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_APP_EMS !== "true" ? process.env.NEXT_PUBLIC_APP_URL : process.env.NEXT_PUBLIC_APP_EMS_URL}/employees/get?page=${page}&limit=${limit}&search=${search}`,
+            `${process.env.NEXT_PUBLIC_APP_EMS === "true" ? process.env.NEXT_PUBLIC_APP_URL : process.env.NEXT_PUBLIC_APP_EMS_URL}/employees/get?page=${page}&limit=${limit}&search=${search}`,
             {
                 method: 'GET',
                 headers: {
