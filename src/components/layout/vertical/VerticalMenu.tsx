@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 
 import Chip from '@mui/material/Chip'
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
@@ -16,7 +17,7 @@ import HolidayVillageIcon from '@mui/icons-material/HolidayVillage'
 
 // Styled Component Imports
 import EventIcon from '@mui/icons-material/Event'
-
+import WalletIcon from '@mui/icons-material/Wallet';
 import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNavExpandIcon'
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { Menu, SubMenu, MenuItem, MenuSection } from '@menu/vertical-menu'
@@ -25,6 +26,8 @@ import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Me
 // Style Imports
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
+import { colors } from '@mui/material';
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -89,14 +92,17 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
               Employees
             </MenuItem>
           }
-          <MenuItem href={`/payroll`} icon={<EventIcon />}>
+          <MenuItem href={`/payroll`} icon={<i className='fa-brands fa-paypal fa-2xs' />}>
             Payroll
           </MenuItem>
-          <MenuItem href={`/salary-template`} icon={<EventIcon />}>
+          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<i className='fa fa-receipt fa-2xs' />}>
             Salary Template
-          </MenuItem>
-          <MenuItem href={`/salary-component`} icon={<EventIcon />}>
+          </MenuItem>}
+          {userRole === '1' && <MenuItem href={`/salary-component`} icon={<i className='fa fa-edit fa-2xs' />}>
             Salary Component
+          </MenuItem>}
+          <MenuItem href={`/payroll-generator`} icon={<CurrencyRupeeIcon />}>
+            Payslip-Generator
           </MenuItem>
         </MenuSection>
       </Menu>

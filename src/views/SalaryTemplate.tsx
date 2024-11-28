@@ -75,6 +75,8 @@ const SalaryTemplate = () => {
       description: '',
     });
 
+    const [netSalary, setNetSalary] = useState(0);
+
     const [errors, setErrors] = useState({
       name: '',
       baseSalary: '',
@@ -94,6 +96,7 @@ const SalaryTemplate = () => {
             deductionTypes: selected.deductionTypes,
             description: selected.description,
           });
+          updateNetSalary(selected.baseSalary, selected.earningTypes, selected.deductionTypes);
         }
       }
     }, [id, salaryTemplates]);
@@ -110,45 +113,73 @@ const SalaryTemplate = () => {
         newErrors.baseSalary = 'Base salary is required';
         isValid = false;
       }
-      if (!formData.earningTypes) {
-        newErrors.earningTypes = 'earningTypt is required';
+      if (!formData.earningTypes.length) {
+        newErrors.earningTypes = 'At least one earning type is required';
         isValid = false;
       }
-      if (!formData.deductionTypes) {
-        newErrors.deductionTypes = 'deductiontype is required';
+      if (!formData.deductionTypes.length) {
+        newErrors.deductionTypes = 'At least one deduction type is required';
         isValid = false;
       }
-
-
 
       setErrors(newErrors);
       return isValid;
     };
 
+    const updateNetSalary = (fixedBaseSalary: number, earningIds: string[], deductionIds: string[]) => {
+      // Calculate total earnings
+      const earningsTotal = salaryComponents
+        .filter(comp => earningIds.includes(comp._id))
+        .reduce((sum, comp) => sum + comp.amount, 0);
+
+      // Calculate total deductions
+      const deductionsTotal = salaryComponents
+        .filter(comp => deductionIds.includes(comp._id))
+        .reduce((sum, comp) => sum + comp.amount, 0);
+
+      // Calculate net salary
+      const calculatedNetSalary = fixedBaseSalary + earningsTotal - deductionsTotal;
+      setNetSalary(calculatedNetSalary);
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
-      setFormData(prevState => ({ ...prevState, [name]: value }));
+
+      if (name === 'baseSalary') {
+        const fixedBaseSalary = parseFloat(value) || 0;
+        setFormData(prevState => ({
+          ...prevState,
+          baseSalary: fixedBaseSalary,
+        }));
+        updateNetSalary(fixedBaseSalary, formData.earningTypes, formData.deductionTypes);
+      } else {
+        setFormData(prevState => ({ ...prevState, [name]: value }));
+      }
     };
+
     const handleEarningTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map((item) => item._id);
-      setFormData((prev) => ({ ...prev, earningTypes: newIds }));
+      const newIds = newValue.map(item => item._id);
+      setFormData(prev => ({ ...prev, earningTypes: newIds }));
+      updateNetSalary(formData.baseSalary, newIds, formData.deductionTypes);
     };
 
     const handleDeductionTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map((item) => item._id);
-      setFormData((prev) => ({ ...prev, deductionTypes: newIds }));
+      const newIds = newValue.map(item => item._id);
+      setFormData(prev => ({ ...prev, deductionTypes: newIds }));
+      updateNetSalary(formData.baseSalary, formData.earningTypes, newIds);
     };
-
 
     const handleSubmit = () => {
       if (validateForm()) {
         const method = id ? 'PUT' : 'POST';
-        const url = id ? `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/update/${id}` : `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/create`;
+        const url = id
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/update/${id}`
+          : `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/create`;
 
         fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, netSalary }),
         })
           .then(response => response.json())
           .then(data => {
@@ -195,7 +226,7 @@ const SalaryTemplate = () => {
               label="Base Salary"
               name="baseSalary"
               type="number"
-              value={formData.baseSalary}
+              value={formData.baseSalary === 0 ? '' : formData.baseSalary} // If it's 0, show an empty string
               onChange={handleChange}
               required
               error={!!errors.baseSalary}
@@ -215,11 +246,10 @@ const SalaryTemplate = () => {
                   </li>
                 )}
                 renderInput={(params) => <TextField {...params} label="Select Earnings" variant="outlined" />}
-                value={salaryComponents.filter((comp) =>
-                  formData.earningTypes.includes(comp._id)
-                )}
+                value={salaryComponents.filter((comp) => formData.earningTypes.includes(comp._id))}
                 onChange={handleEarningTypesChange}
-                isOptionEqualToValue={(option, value) => option._id === value._id} />
+                isOptionEqualToValue={(option, value) => option._id === value._id}
+              />
               {errors.earningTypes && (
                 <Typography color="error">{errors.earningTypes}</Typography>
               )}
@@ -238,9 +268,7 @@ const SalaryTemplate = () => {
                   </li>
                 )}
                 renderInput={(params) => <TextField {...params} label="Select Deductions" variant="outlined" />}
-                value={salaryComponents.filter((comp) =>
-                  formData.deductionTypes.includes(comp._id)
-                )}
+                value={salaryComponents.filter((comp) => formData.deductionTypes.includes(comp._id))}
                 onChange={handleDeductionTypesChange}
                 isOptionEqualToValue={(option, value) => option._id === value._id}
               />
@@ -249,7 +277,21 @@ const SalaryTemplate = () => {
               )}
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Net Salary"
+              name="netSalary"
+              type="number"
+              value={netSalary}
+              InputProps={{
+                readOnly: true,
+                startAdornment: <Typography sx={{ marginRight: 1 }}>₹</Typography>,
+
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Description"
@@ -292,6 +334,7 @@ const SalaryTemplate = () => {
   const columns = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'baseSalary', headerName: 'Base Salary', flex: 1 },
+    { field: 'netSalary', headerName: 'Net Salary', flex: 1 },
     {
       field: 'earningType',
       headerName: 'EarningType',
@@ -339,7 +382,9 @@ const SalaryTemplate = () => {
     <Box sx={{ flexGrow: 1, p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Salary Templates</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleTemplateAddClick}>
+        <Button
+          style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
+          variant="contained" startIcon={<AddIcon />} onClick={handleTemplateAddClick}>
           Add Salary Template
         </Button>
       </Box>

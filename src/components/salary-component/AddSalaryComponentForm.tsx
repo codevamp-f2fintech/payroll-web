@@ -40,7 +40,6 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
   });
 
   const salaryComponentTypes1 = [
-    'Basic salary',
     'DA',
     'HRA',
     'Allowances',
