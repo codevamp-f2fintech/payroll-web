@@ -23,7 +23,8 @@ const PayrollGrid = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  console.log('patroll', payrolls)
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userRole = user?.role;
 
 
   const debouncedFetch = useCallback(
@@ -65,21 +66,44 @@ const PayrollGrid = () => {
   }
 
   const generateColumns = useMemo(() => {
-    return [
-
+    // Conditionally render the Edit column based on userRole
+    const columns = [
       {
         field: 'employeeId',
-        headerName: 'Employee_id',
+        headerName: 'Employee Name',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        renderCell: (params) => {
+          const employee = params.row.employee;
+          return employee ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <img
+                src={employee.image}
+                alt={`${employee.first_name} ${employee.last_name}`}
+                style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
+              />
+              <span>{employee.first_name} {employee.last_name}</span>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+          );
+        },
       },
+
       {
         field: 'salaryTemplate',
         headerName: 'Salary Template',
         flex: 1,
         headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
+        align: 'center',
         renderCell: (params) => {
           const name = params.row.salaryTemplate.name
           return (
@@ -95,13 +119,15 @@ const PayrollGrid = () => {
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        align: 'center',
       },
       {
-        field: 'total',
-        headerName: 'Total',
+        field: 'netSalary',
+        headerName: 'Net Salary',
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        align: 'center',
       },
       {
         field: 'processedBy',
@@ -109,8 +135,13 @@ const PayrollGrid = () => {
         flex: 1,
         headerAlign: 'center',
         headerClassName: 'super-app-theme--header',
+        align: 'center',
       },
-      {
+    ];
+
+    // Only add the Edit column if the user role is '1'
+    if (userRole === '1') {
+      columns.push({
         field: 'edit',
         headerName: 'Edit',
         sortable: false,
@@ -120,10 +151,12 @@ const PayrollGrid = () => {
             Edit
           </Button>
         ),
-      },
+      });
+    }
 
-    ]
-  }, [])
+    return columns;
+  }, [payrolls, userRole]);
+
   return (
     <>
       <ToastContainer
@@ -152,7 +185,7 @@ const PayrollGrid = () => {
             Dashboard / Payroll
           </Typography>
         </Box>
-        <Box display='flex' alignItems='center'>
+        {userRole === '1' && <Box display='flex' alignItems='center'>
           <Button
             style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
             variant='contained'
@@ -163,7 +196,7 @@ const PayrollGrid = () => {
             Add Payroll
           </Button>
 
-        </Box>
+        </Box>}
       </Box>
       <Grid container spacing={6} alignItems='center' mb={2}>
 

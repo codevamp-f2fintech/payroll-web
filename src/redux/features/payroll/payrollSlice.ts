@@ -2,11 +2,38 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 export interface Payroll {
-  employeeId: string;
-  salaryTemplate: string;
+  employee: {
+    _id: string;
+    first_name: string;
+    last_name: string;
+    code: string;
+    designation: string;
+    email: string;
+    image: string;
+  };
+  salaryTemplate: {
+    _id: string;
+    name: string;
+    baseSalary: number;
+    earningTypes: {
+      _id: string;
+      salarytype: string;
+      type: string;
+      amount: number;
+      description: string;
+    }[];
+    deductionTypes: {
+      _id: string;
+      salarytype: string;
+      type: string;
+      amount: number;
+      description: string;
+    }[];
+    description: string;
+  };
   status: string;
   processedBy: string;
-  total: number;
+  netSalary: number;
 }
 
 interface PayrollState {
@@ -14,6 +41,7 @@ interface PayrollState {
   loading: boolean;
   error: string | null;
   total: number;
+  filteredByEmployee: Payroll[];
 }
 
 const initialState: PayrollState = {
@@ -21,19 +49,26 @@ const initialState: PayrollState = {
   loading: false,
   error: null,
   total: 0,
+  filteredByEmployee: [],
 };
 
 export const fetchPayrolls = createAsyncThunk<{
   data: any;
   payrolls: Payroll[];
   total: number;
-}, { page?: number; limit?: number; keyword?: string }>(
+}, { page?: number; limit?: number; keyword?: string; month?: number; year?: number }>(
   'payroll/fetchPayrolls',
-  async ({ page, limit, keyword }: { page: number; limit: number; keyword: string }) => {
+  async ({ page, limit, keyword, month, year }: { page: number; limit: number; keyword: string; month?: number; year?: number }) => {
+    const queryParams = new URLSearchParams();
+
+    if (page) queryParams.append('page', page.toString());
+    if (limit) queryParams.append('limit', limit.toString());
+    if (keyword) queryParams.append('keyword', encodeURIComponent(keyword));
+    if (month) queryParams.append('month', month.toString());
+    if (year) queryParams.append('year', year.toString());
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/get?page=${page}&limit=${limit}&keyword=${encodeURIComponent(
-        keyword
-      )}`
+      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/get?${queryParams.toString()}`
     );
 
     if (!response.ok) {
@@ -41,7 +76,39 @@ export const fetchPayrolls = createAsyncThunk<{
     }
     return (await response.json()) as { payrolls: Payroll[], total: number };
   }
-)
+);
+
+export const fetchPayrollsByEmployeeId = createAsyncThunk<
+  { data: Payroll[]; total: number },
+  { employeeId: string; page?: number; limit?: number; month?: number; year?: number }
+>(
+  'payroll/fetchPayrollsByEmployeeId',
+  async ({ employeeId, page, limit, month, year }: { employeeId: string; page?: number; limit?: number; month?: number; year?: number }) => {
+    if (!employeeId) {
+      throw new Error('Employee ID is required');
+    }
+
+    const queryParams = new URLSearchParams();
+
+    if (page) queryParams.append('page', page.toString());
+    if (limit) queryParams.append('limit', limit.toString());
+    if (month) queryParams.append('month', month.toString()); // Append month if provided
+    if (year) queryParams.append('year', year.toString()); // Append year if provided
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/by-employee/${employeeId}?${queryParams.toString()}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payrolls by employee ID');
+    }
+
+    return (await response.json()) as { data: Payroll[]; total: number };
+  }
+);
+
+
+
 
 const payrollSlice = createSlice({
   name: 'payroll',
@@ -65,6 +132,20 @@ const payrollSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Something went wrong';
       })
+
+      .addCase(fetchPayrollsByEmployeeId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPayrollsByEmployeeId.fulfilled, (state, action) => {
+        state.filteredByEmployee = action.payload.data; // Populate filtered payrolls
+        state.total = action.payload.total;
+        state.loading = false;
+      })
+      .addCase(fetchPayrollsByEmployeeId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Something went wrong";
+      });
   }
 });
 

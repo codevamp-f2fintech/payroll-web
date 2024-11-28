@@ -113,7 +113,9 @@ const SalaryComponent = () => {
           <Typography variant="h5" gutterBottom>
             Salary Component
           </Typography>
-          <Button variant="contained" color="warning" onClick={handleComponentAddClick}>
+          <Button
+            style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
+            variant="contained" color="warning" onClick={handleComponentAddClick}>
             <AddIcon /> Add Component
           </Button>
         </Box>

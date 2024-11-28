@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react';
-
-import { Box, Grid, TextField, Typography, IconButton, Button, FormControl, Select, MenuItem, InputLabel, Autocomplete, TableContainer, Table, TableRow, TableCell, TableHead, TableBody, Paper } from '@mui/material';
+import { Box, Grid, TextField, Typography, IconButton, Button, FormControl, Select, MenuItem, InputLabel, Autocomplete, TableContainer, Table, TableRow, TableCell, TableHead, TableBody, Paper, Avatar } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { toast, } from 'react-toastify'; // Assuming you're using react-toastify for notifications
+import { toast, } from 'react-toastify';
 import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { fetchSalaryComponents } from '@/redux/features/salaryComponent/salaryComponentSlice'
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
+import { apiResponse } from '@/utility/apiResponse/employeesResponse';
 
 const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, limit, selectedKeyword }) => {
   const dispatch: AppDispatch = useDispatch();
   const { salaryTemplates } = useSelector((state: RootState) => state.salaryTemplates);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const [typeDetails, setTypeDetails] = useState({});
 
+
+  console.log('payrolls', payrolls)
   const [formData, setFormData] = useState({
     employeeId: '',
     salaryTemplate: '',
     status: 'pending',
     processedBy: '',
-    total: '',
+    netSalary: '',
 
   });
 
@@ -28,8 +31,22 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     salaryTemplate: '',
     status: '',
     processedBy: '',
-    total: '',
+    netSalary: '',
   });
+
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const employeesData = await apiResponse(); // Fetch employees from your API
+        setEmployees(employeesData); // Set the employees data
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
 
 
   useEffect(() => {
@@ -75,15 +92,15 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
       const selected = payrolls.find((h) => h._id === payroll);
       if (selected) {
         setFormData({
-          employeeId: selected.employeeId,
-          salaryTemplate: selected.salaryTemplate, // Add salaryTemplate
+          employeeId: selected.employee?._id || selected.employeeId || '',
+          salaryTemplate: selected.salaryTemplate,
           status: selected.status,
           processedBy: selected.processedBy,
-          total: selected.total,
+          netSalary: selected.netSalary,
         });
         const selectedTemplateData = salaryTemplates.find(
-
-          (template) => template._id === selected.salaryTemplate._id
+          (template) =>
+            template._id === (selected.salaryTemplate?._id || selected.salaryTemplate)
         );
         setSelectedTemplate(selectedTemplateData);
       }
@@ -98,7 +115,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
       salaryTemplate: '',
       status: '',
       processedBy: '',
-      total: '',
+      netSalary: '',
     };
 
     if (!formData.employeeId.trim()) {
@@ -106,10 +123,13 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
       isValid = false;
     }
 
-    if (!formData.salaryTemplate._id.trim()) {
-      newErrors.salaryTemplate._id = 'Salary template is required';
+    if (!formData.salaryTemplate ||
+      (typeof formData.salaryTemplate === 'object' && !formData.salaryTemplate._id?.trim()) ||
+      (typeof formData.salaryTemplate === 'string' && !formData.salaryTemplate.trim())) {
+      newErrors.salaryTemplate = 'Salary template is required';
       isValid = false;
     }
+
 
     if (!formData.status) {
       newErrors.status = 'Status  is required';
@@ -120,8 +140,8 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
       newErrors.processedBy = 'ProcessedBy is required';
       isValid = false;
     }
-    // if (!formData.total.trim()) {
-    //   newErrors.total = 'Total is required';
+    // if (!formData.netSalary.trim()) {
+    //   newErrors.netSalary = 'Total is required';
     //   isValid = false;
     // }
 
@@ -144,32 +164,13 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     });
   };
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   setFormData((prevState) => ({
-  //     ...prevState,
-  //     [name]: value,
-  //   }));
-  // };
-
-
-
-  // const handleTemplateChange = (event, newValue) => {
-  //   setFormData({
-  //     ...formData,
-  //     salaryTemplate: newValue ? newValue._id : null
-  //   });
-  //   setSelectedTemplate(newValue);
-  // };
-
   const handleTemplateChange = (event, newValue) => {
     setSelectedTemplate(newValue);
 
     setFormData((prevData) => ({
       ...prevData,
       salaryTemplate: newValue ? newValue._id : null,
-      total: newValue?.baseSalary || '', // Set total to baseSalary or empty if not available
+      netSalary: newValue?.netSalary || '',
     }));
   };
 
@@ -204,7 +205,6 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     }
   };
 
-
   return (
     <><Box sx={{ flexGrow: 1, padding: 2 }}>
       <Box display='flex' justifyContent='space-between' alignItems='center'>
@@ -216,18 +216,38 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
         </IconButton>
       </Box>
       <Grid container spacing={3}>
+        {/* Employee Selection */}
         <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Employee ID'
-            name='employeeId'
-            value={formData.employeeId}
-            onChange={handleChange}
-            required
-            error={!!errors.employeeId}
-            helperText={errors.employeeId}
-            FormHelperTextProps={{ style: { color: 'red' } }}
+          <Autocomplete
+            options={employees}
+            getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
+            renderOption={(props, option) => (
+              <li {...props}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar src={option.image} alt={option.first_name} sx={{ marginRight: 2 }} />
+                  <Typography>{option.first_name} {option.last_name}</Typography>
+                </Box>
+              </li>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Employee"
+                variant="outlined"
+                error={!!errors.employeeId}
+                helperText={errors.employeeId}
+              />
+            )}
+            value={employees.length > 0 ? employees.find(emp => emp._id === formData.employeeId) || null : null}
+            onChange={(event, newValue) => {
+              setFormData({
+                ...formData,
+                employeeId: newValue ? newValue._id : '',
+              });
+            }}
+            isOptionEqualToValue={(option, value) => option._id === value?._id}
           />
+
         </Grid>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth required>
@@ -241,7 +261,11 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                 </li>
               )}
               renderInput={(params) => <TextField {...params} label="Select Template" variant="outlined" />}
-              value={salaryTemplates.find((comp) => comp._id === formData.salaryTemplate._id) || null}
+              value={
+                salaryTemplates.find((template) =>
+                  template._id === (formData.salaryTemplate?._id || formData.salaryTemplate)
+                ) || null
+              }
               onChange={handleTemplateChange}
               isOptionEqualToValue={(option, value) => option._id === value._id} />
             {errors.salaryTemplate && (
@@ -369,16 +393,16 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
 
               <TextField
                 fullWidth
-                label='Base salary amount'
+                label='Net Salary'
                 variant="outlined"
-                name='total'
-                value={formData.total} // Bind to formData.total
+                name='netSalary'
+                value={formData.netSalary}
                 onChange={handleChange}
                 InputProps={{
                   startAdornment: <Typography sx={{ marginRight: 1 }}>₹</Typography>,
                 }}
-                error={!!errors.total}
-                helperText={errors.total}
+                error={!!errors.netSalary}
+                helperText={errors.netSalary}
               />
             </Grid>
 
