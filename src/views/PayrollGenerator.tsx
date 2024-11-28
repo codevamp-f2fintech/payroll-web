@@ -152,6 +152,7 @@ export const PayrollGenerator = () => {
     const earnings = employee?.salaryTemplate?.earningTypes.map(earning => ({
       type: earning?.type || 'N/A',
       salaryType: earning?.salarytype || 'N/A',
+      baseSalary: earning?.baseSalary || 0,
       amount: earning?.amount || 0
     }))
 
@@ -161,10 +162,15 @@ export const PayrollGenerator = () => {
       amount: deduction?.amount || 0
     }))
 
+    const baseSalary = employee?.salaryTemplate.baseSalary
+
+
     // Calculate total earnings, deductions, and net payable
     const totalEarnings = earnings.reduce((acc, curr) => acc + curr.amount, 0)
     const totalDeductions = deductions.reduce((acc, curr) => acc + curr.amount, 0)
     const netPayable = employee?.netSalary
+    console.log('base', baseSalary)
+    const grossEarning = baseSalary + totalEarnings
 
     // Function to convert amount to words
     const numberToWords = num => {
@@ -415,6 +421,9 @@ export const PayrollGenerator = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  <Typography>
+                    Base Salary {baseSalary}
+                  </Typography>
                   {earnings.map((earning, index) => (
                     <tr key={index}>
                       <td style={{ padding: '8px' }}>{earning.type}</td>
@@ -470,7 +479,7 @@ export const PayrollGenerator = () => {
                   }}
                 >
                   <Typography sx={{ fontWeight: 'bold' }}>Gross Earnings:</Typography>
-                  <Typography sx={{ color: 'black', fontWeight: 'bold' }}>₹{totalEarnings.toFixed(2)}</Typography>
+                  <Typography sx={{ color: 'black', fontWeight: 'bold' }}>₹{grossEarning.toFixed(2)}</Typography>
                 </Box>
               </Grid>
 

@@ -95,7 +95,7 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
           <MenuItem href={`/payroll`} icon={<i className='fa-brands fa-paypal fa-2xs' />}>
             Payroll
           </MenuItem>
-          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<i className='fa fa-credit-card fa-2xs' />}>
+          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<i className='fa fa-receipt fa-2xs' />}>
             Salary Template
           </MenuItem>}
           {userRole === '1' && <MenuItem href={`/salary-component`} icon={<i className='fa fa-edit fa-2xs' />}>
