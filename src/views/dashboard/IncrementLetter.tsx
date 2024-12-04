@@ -137,7 +137,7 @@ const PaymentHistory = () => {
                     </Typography>
                 </Box>
                 <Typography color="white" variant="subtitle1">
-                    Track all your salary and bonus payments
+                    Track your salary from the past 6 months
                 </Typography>
             </HeaderSection>
 
@@ -156,7 +156,7 @@ const PaymentHistory = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                                         <AccountBalanceIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                                         <Typography variant="body2" color="text.secondary">
-                                            Processed By: {payment.processedBy}
+                                            Processed By: {payment.processedBy.toUpperCase()}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -169,17 +169,17 @@ const PaymentHistory = () => {
                                         {formatCurrency(payment.totalSalary)}
                                     </Typography>
                                     <StatusChip
-                                        label={payment.status}
+                                        label={payment.status.toUpperCase()}
                                         status={payment.status}
                                         size="small"
                                     />
-                                    <Typography
+                                    {/* <Typography
                                         variant="caption"
                                         display="block"
                                         sx={{ mt: 1, color: 'text.secondary' }}
                                     >
                                         Base Salary: {formatCurrency(payment.baseSalary)}
-                                    </Typography>
+                                    </Typography> */}
                                 </Box>
                             </PaymentCard>
                         </Grid>

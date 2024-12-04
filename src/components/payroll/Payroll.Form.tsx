@@ -182,11 +182,17 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
         ? `${process.env.NEXT_PUBLIC_APP_URL}/payroll/update/${payroll}`
         : `${process.env.NEXT_PUBLIC_APP_URL}/payroll/create`;
 
+      const formDataWithNetSalaryAsNumber = {
+        ...formData,
+        netSalary: parseFloat(formData.netSalary) || 0,  // Ensure it's a number, default to 0 if invalid
+      };
+
+
 
       fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formDataWithNetSalaryAsNumber),
       })
         .then(response => response.json())
         .then(data => {
@@ -303,8 +309,15 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                           const details = typeDetails[typeId];
                           return (
                             <TableRow key={typeId}>
-                              <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
-                              <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
+                              <TableCell>
+                                {/* Check and display `otherType` if available */}
+                                {details && details.otherType
+                                  ? `${details.otherType}`
+                                  : details ? details.type : 'Unknown Type'}
+                              </TableCell>
+                              <TableCell align="right">
+                                {details ? `₹${details.amount.toFixed(2)}` : 'N/A'}
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -324,6 +337,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                           </TableCell>
                         </TableRow>
                       </TableBody>
+
                     </Table>
                   </TableContainer>
                 </>
@@ -359,8 +373,15 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                           const details = typeDetails[typeId];
                           return (
                             <TableRow key={typeId}>
-                              <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
-                              <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
+                              <TableCell>
+                                {/* Check and display `otherType` if available */}
+                                {details && details.otherType
+                                  ? `${details.otherType}`
+                                  : details ? details.type : 'Unknown Type'}
+                              </TableCell>
+                              <TableCell align="right">
+                                {details ? `₹${details.amount.toFixed(2)}` : 'N/A'}
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -380,6 +401,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                           </TableCell>
                         </TableRow>
                       </TableBody>
+
                     </Table>
                   </TableContainer>
                 </>

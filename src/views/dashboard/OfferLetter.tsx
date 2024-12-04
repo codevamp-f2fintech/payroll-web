@@ -171,7 +171,7 @@ const OfferLetter = () => {
                 subheader={
                     <>
                         <WelcomeMessage>
-                            We're excited to have you join our team
+                            Welcome to the team! We're glad to have you on board.
                         </WelcomeMessage>
                         <Typography variant="h5" color="white" fontWeight="500">
                             {userData?.first_name} {userData?.last_name}
@@ -188,6 +188,16 @@ const OfferLetter = () => {
                         <ListItemText
                             primary={<Label>Position</Label>}
                             secondary={<Value>{userData?.designation}</Value>}
+                        />
+                    </StyledListItem>
+
+                    <StyledListItem>
+                        <IconWrapper bgcolor="#e3f2fd" iconcolor="#1976d2">
+                            <Business />
+                        </IconWrapper>
+                        <ListItemText
+                            primary={<Label>Department</Label>}
+                            secondary={<Value>{userData?.department}</Value>}
                         />
                     </StyledListItem>
 

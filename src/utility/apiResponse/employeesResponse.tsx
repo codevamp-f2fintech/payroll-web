@@ -62,3 +62,35 @@ export const employeesCountResponse = async (): Promise<any> => {
     throw error;
   }
 };
+
+
+export const getEmployeesWithoutPagination = async (): Promise<any> => {
+  const token = localStorage?.getItem("token") || '{}';
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/employees/all-emp`,  // No page, limit, or keyword params
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+
+    // Check if the response is successful
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // Parse the response data
+    const employees = await response.json();
+
+    // Return the employee data if successful
+    return employees;
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    throw error;
+  }
+};

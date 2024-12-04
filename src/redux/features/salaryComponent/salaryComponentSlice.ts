@@ -7,6 +7,7 @@ export interface SalaryComponent {
   type: string;
   amount: number;
   description: string;
+  otherType: string;
   createdBy: string;
   createdAt: Date;
 }
