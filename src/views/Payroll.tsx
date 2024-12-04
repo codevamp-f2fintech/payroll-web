@@ -1,13 +1,13 @@
 "use client"
 import AddPayrollForm from "@/components/payroll/Payroll.Form"
-import { Box, Button, Dialog, DialogContent, Grid, InputAdornment, TextField, Typography } from "@mui/material"
+import { Box, Button, Dialog, DialogContent, FormControl, Grid, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material"
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import { SetStateAction, useCallback, useEffect, useMemo, useState } from "react"
 import { DataGrid } from "@mui/x-data-grid"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { fetchPayrolls } from "@/redux/features/payroll/payrollSlice"
+import { fetchPayrollByEmployeeIdAndYear, fetchPayrolls } from "@/redux/features/payroll/payrollSlice"
 import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
@@ -16,28 +16,58 @@ import { debounce, template } from "lodash"
 
 const PayrollGrid = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { payrolls, total } = useSelector((state: RootState) => state.payrolls);
+  const { payrolls, total, employeePayrollsByYear } = useSelector((state: RootState) => state.payrolls);
   const [selectedPayrolls, setSelectedPayrolls] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [selectedKeyword, setSelectedKeyword] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userRole = user?.role;
+  const userId = user?.id;
+
+  const rows = user.role === '1' ? payrolls : employeePayrollsByYear
 
 
   const debouncedFetch = useCallback(
     debounce(() => {
-      dispatch(fetchPayrolls({ page, limit, keyword: selectedKeyword }));
+      const params = {
+        page,
+        limit,
+        keyword: selectedKeyword,
+        year: selectedYear,
+        month: selectedMonth, // Ensure selectedMonth is passed as well
+      };
+
+      console.log("Fetching payrolls with params:", params);
+
+      if (userRole === '1') {
+        dispatch(fetchPayrolls(params)); // Fetch for admin
+      } else {
+        dispatch(fetchPayrollByEmployeeIdAndYear({ employeeId: userId, year: selectedYear, month: selectedMonth, page, limit, keyword: selectedKeyword })); // Fetch for employee
+      }
     }, 300),
-    [page, limit, selectedKeyword]
+    [page, limit, selectedKeyword, userRole, userId, selectedYear, selectedMonth] // Include selectedMonth here
   );
+
 
   useEffect(() => {
     debouncedFetch();
     return debouncedFetch.cancel;
   }, [page, limit, selectedKeyword, debouncedFetch]);
+
+  const handleYearChange = (e) => {
+    setSelectedYear(e.target.value);
+    // You can trigger a fetch for payrolls based on the selected year
+    debouncedFetch(); // Assuming the year is included in the debounced fetch
+  };
+  const handleMonthChange = event => {
+    setSelectedMonth(event.target.value)
+
+  }
 
 
   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
@@ -68,35 +98,37 @@ const PayrollGrid = () => {
   const generateColumns = useMemo(() => {
     // Conditionally render the Edit column based on userRole
     const columns = [
-      {
-        field: 'employeeId',
-        headerName: 'Employee Name',
-        flex: 1,
-        headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
-        renderCell: (params) => {
-          const employee = params.row.employee;
-          return employee ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-              }}
-            >
-              <img
-                src={employee.image}
-                alt={`${employee.first_name} ${employee.last_name}`}
-                style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
-              />
-              <span>{employee.first_name} {employee.last_name}</span>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
-          );
+      ...(user.role === '1' ? [
+        {
+          field: 'employeeId',
+          headerName: 'Employee Name',
+          flex: 1,
+          headerAlign: 'center',
+          headerClassName: 'super-app-theme--header',
+          renderCell: (params) => {
+            const employee = params.row.employee;
+            return employee ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                }}
+              >
+                <img
+                  src={employee.image}
+                  alt={`${employee.first_name} ${employee.last_name}`}
+                  style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
+                />
+                <span>{employee.first_name} {employee.last_name}</span>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+            );
+          },
         },
-      },
+      ] : []),
 
       {
         field: 'salaryTemplate',
@@ -112,6 +144,20 @@ const PayrollGrid = () => {
             </Typography>
           )
         }
+      },
+      {
+        field: 'createdAt',
+        headerName: 'PayRoll',
+        flex: 1,
+        headerAlign: 'center',
+        align: 'center',
+        renderCell: (params) => {
+          const formattedDate = new Date(params.row.createdAt).toLocaleDateString('en-GB', {
+            month: 'long',
+            year: 'numeric',
+          });
+          return <Typography style={{ fontWeight: 'bold', color: 'rgb(46 38 61 / 90%)', }} variant="body2">{formattedDate}</Typography>;
+        },
       },
       {
         field: 'status',
@@ -220,6 +266,47 @@ const PayrollGrid = () => {
           />
         </Grid>
 
+        {userRole === '1' && <Grid item xs={12} md={3}>
+          <FormControl sx={{ marginBottom: 2, width: '100%' }}>
+            <InputLabel id='month-select-label'>Select Month</InputLabel>
+            <Select
+              labelId='month-select-label'
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              label='Select Month'
+              fullWidth
+            >
+              <MenuItem value={1}>January</MenuItem>
+              <MenuItem value={2}>February</MenuItem>
+              <MenuItem value={3}>March</MenuItem>
+              <MenuItem value={4}>April</MenuItem>
+              <MenuItem value={5}>May</MenuItem>
+              <MenuItem value={6}>June</MenuItem>
+              <MenuItem value={7}>July</MenuItem>
+              <MenuItem value={8}>August</MenuItem>
+              <MenuItem value={9}>September</MenuItem>
+              <MenuItem value={10}>October</MenuItem>
+              <MenuItem value={11}>November</MenuItem>
+              <MenuItem value={12}>December</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        }
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth>
+            <InputLabel>Year</InputLabel>
+            <Select
+              value={selectedYear}
+              label="Year"
+              onChange={handleYearChange}
+            >
+              <MenuItem value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</MenuItem>
+              <MenuItem value={new Date().getFullYear()}>{new Date().getFullYear()}</MenuItem>
+              <MenuItem value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
       </Grid>
 
       <Box sx={{ width: '100%', position: 'relative' }}>
@@ -248,7 +335,7 @@ const PayrollGrid = () => {
             },
           }}
 
-          rows={payrolls}
+          rows={rows}
           columns={generateColumns}
           getRowId={(row) => row._id}
           paginationMode='server'

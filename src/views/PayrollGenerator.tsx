@@ -155,14 +155,14 @@ export const PayrollGenerator = () => {
     const { employee } = props
 
     const earnings = employee?.salaryTemplate?.earningTypes.map(earning => ({
-      type: earning?.type || 'N/A',
+      type: earning?.type === 'Others' && earning?.otherType ? earning?.otherType : earning?.type || 'N/A',
       salaryType: earning?.salarytype || 'N/A',
       baseSalary: earning?.baseSalary || 0,
       amount: earning?.amount || 0
     }))
 
     const deductions = employee?.salaryTemplate?.deductionTypes.map(deduction => ({
-      type: deduction?.type || 'N/A',
+      type: deduction?.type === 'Others' && deduction?.otherType ? deduction?.otherType : deduction?.type || 'N/A',
       salaryType: deduction?.salarytype || 'N/A',
       amount: deduction?.amount || 0
     }))
@@ -423,9 +423,12 @@ export const PayrollGenerator = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <Typography>
-                    Base Salary {baseSalary}
-                  </Typography>
+                  <tr>
+                    <td style={{ padding: '8px' }}>Base Salary</td>
+                    <td style={{ padding: '8px', textAlign: 'right', color: 'black', fontWeight: 'bold' }}>
+                      ₹{baseSalary.toFixed(2)}
+                    </td>
+                  </tr>
                   {earnings.map((earning, index) => (
                     <tr key={index}>
                       <td style={{ padding: '8px' }}>{earning.type}</td>
@@ -437,6 +440,7 @@ export const PayrollGenerator = () => {
                 </tbody>
               </table>
             </Grid>
+
 
             {/* Deductions Section */}
             <Grid item xs={6} sx={{ paddingBottom: '20px' }}>
@@ -557,42 +561,84 @@ export const PayrollGenerator = () => {
   })
 
   const columns: GridColDef[] = [
+    ...(user.role === '1' ? [
+      {
+        field: 'employee',
+        headerName: 'Employee',
+        renderCell: (params) => {
+          const { first_name, last_name, image } = params.row;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar src={image} alt={`${first_name} ${last_name}`} sx={{ marginRight: 2, width: 30, height: 30 }} />
+              <Typography variant="body2">
+                {first_name} {last_name}
+              </Typography>
+            </Box>
+          );
+        },
+        width: 200, // Fixed width for this column
+      },
+    ] : []),
+
+    ...(user.role === '1' ? [
+      {
+        field: 'code',
+        headerName: 'Employee Code',
+        headerAlign: 'center',
+        align: 'center',
+        width: 180, // Set width for better control
+      },
+    ] : []),
+
     {
-      field: 'employee',
-      headerName: 'Employee',
-      width: 200,
-      renderCell: params => {
-        const { first_name, last_name, image } = params.row // Access employee data
-
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar src={image} alt={`${first_name} ${last_name}`} sx={{ marginRight: 2 }} />
-            <Typography variant='body2'>
-              {first_name} {last_name}
-            </Typography>
-          </Box>
-        )
-      }
+      field: 'netSalary',
+      headerName: 'Total Net Salary',
+      headerAlign: 'center',
+      align: 'center',
+      width: 180, // Fixed width for net salary column
     },
-
-    { field: 'code', headerName: 'Employee Code', width: 150 },
     {
-      field: 'netSalary', headerName: 'Base Salary', width: 150,
-
+      field: 'createdAt',
+      headerName: 'PayRoll',
+      flex: 1,  // Flex to allow it to take up available space
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => {
+        const formattedDate = new Date(params.row.createdAt).toLocaleDateString('en-GB', {
+          month: 'long',
+          year: 'numeric',
+        });
+        return <Typography style={{ fontWeight: 'bold', color: 'rgb(46 38 61 / 90%)', textAlign: 'center', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} variant="body2">{formattedDate}</Typography>;
+      },
     },
-    { field: 'status', headerName: 'Status', width: 150 },
-    { field: 'processedBy', headerName: 'Processed By', width: 150 },
+    {
+      field: 'status',
+      headerName: 'Status',
+      headerAlign: 'center',
+      align: 'center',
+      width: 150,  // Fixed width for Status
+    },
+    {
+      field: 'processedBy',
+      headerName: 'Processed By',
+      headerAlign: 'center',
+      align: 'center',
+      width: 180,  // Fixed width for Processed By
+    },
     {
       field: 'generate',
       headerName: 'Generate PaySlip',
-      width: 150,
-      renderCell: params => (
-        <Button variant='contained' color='primary' onClick={() => handleGeneratePrint(params.row)}>
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: (params) => (
+        <Button variant="contained" color="primary" onClick={() => handleGeneratePrint(params.row)}>
           Generate
         </Button>
-      )
-    }
-  ]
+      ),
+      width: 180, // Set fixed width for button column
+    },
+  ];
+
 
   console.log('rows', rows)
 
@@ -608,7 +654,8 @@ export const PayrollGenerator = () => {
     earningTypes: payroll.salaryTemplate.earningTypes, // Include earnings
     deductionTypes: payroll.salaryTemplate.deductionTypes, // Include deductions
     status: payroll.status, // Payroll status
-    processedBy: payroll.processedBy // Processed by field
+    processedBy: payroll.processedBy, // Processed by field
+    createdAt: payroll.createdAt
   }))
 
   if (loading) {

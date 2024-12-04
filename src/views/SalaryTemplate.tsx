@@ -239,10 +239,18 @@ const SalaryTemplate = () => {
                 id="Select Earnings"
                 multiple
                 options={salaryComponents.filter(component => component.salarytype === 'Earnings')}
-                getOptionLabel={(option) => `${option.type} - ${option.amount}`}
+                getOptionLabel={(option) => {
+                  // If `otherType` is available and not empty, show it; otherwise, fall back to the `type`
+                  return option.otherType && option.otherType.trim() !== ""
+                    ? `${option.otherType} - ₹${option.amount}`
+                    : `${option.type} - ₹${option.amount}`;
+                }}
                 renderOption={(props, option) => (
                   <li {...props}>
-                    {option.type} - {option.amount}
+                    {/* Display `otherType` if present, otherwise display `type` */}
+                    {option.otherType && option.otherType.trim() !== ""
+                      ? `${option.otherType} - ₹${option.amount}`
+                      : `${option.type} - ₹${option.amount}`}
                   </li>
                 )}
                 renderInput={(params) => <TextField {...params} label="Select Earnings" variant="outlined" />}
@@ -250,6 +258,7 @@ const SalaryTemplate = () => {
                 onChange={handleEarningTypesChange}
                 isOptionEqualToValue={(option, value) => option._id === value._id}
               />
+
               {errors.earningTypes && (
                 <Typography color="error">{errors.earningTypes}</Typography>
               )}
@@ -261,10 +270,18 @@ const SalaryTemplate = () => {
                 id="Select Deductions"
                 multiple
                 options={salaryComponents.filter(component => component.salarytype === 'Deductions')}
-                getOptionLabel={(option) => `${option.type} - ${option.amount}`}
+                getOptionLabel={(option) => {
+                  // If `otherType` is available and not empty, show it; otherwise, fall back to the `type`
+                  return option.otherType && option.otherType.trim() !== ""
+                    ? `${option.otherType} - ₹${option.amount}`
+                    : `${option.type} - ₹${option.amount}`;
+                }}
                 renderOption={(props, option) => (
                   <li {...props}>
-                    {option.type} - {option.amount}
+                    {/* Display `otherType` if present, otherwise display `type` */}
+                    {option.otherType && option.otherType.trim() !== ""
+                      ? `${option.otherType} - ₹${option.amount}`
+                      : `${option.type} - ₹${option.amount}`}
                   </li>
                 )}
                 renderInput={(params) => <TextField {...params} label="Select Deductions" variant="outlined" />}

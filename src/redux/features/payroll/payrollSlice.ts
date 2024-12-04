@@ -34,6 +34,7 @@ export interface Payroll {
   status: string;
   processedBy: string;
   netSalary: number;
+  createdAt: string
 }
 
 interface PayrollState {
@@ -42,6 +43,7 @@ interface PayrollState {
   error: string | null;
   total: number;
   filteredByEmployee: Payroll[];
+  employeePayrollsByYear: Payroll[];
 }
 
 const initialState: PayrollState = {
@@ -50,6 +52,7 @@ const initialState: PayrollState = {
   error: null,
   total: 0,
   filteredByEmployee: [],
+  employeePayrollsByYear: [],
 };
 
 export const fetchPayrolls = createAsyncThunk<{
@@ -107,6 +110,35 @@ export const fetchPayrollsByEmployeeId = createAsyncThunk<
   }
 );
 
+export const fetchPayrollByEmployeeIdAndYear = createAsyncThunk<{
+  data: Payroll[];
+  total: number;
+}, { employeeId: string; year: number; page?: number; limit?: number }>(
+  'payroll/fetchPayrollByEmployeeIdAndYear',
+  async ({ employeeId, year, page = 1, limit = 10 }: { employeeId: string; year: number; page: number; limit: number }) => {
+    if (!employeeId) {
+      throw new Error('Employee ID is required');
+    }
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
+    queryParams.append('year', year.toString());
+
+    // Call the API
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/employee/${employeeId}/year/${year}?${queryParams.toString()}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payroll by employee ID and year');
+    }
+
+    return (await response.json()) as { data: Payroll[]; total: number };
+  }
+);
+
 
 
 
@@ -145,7 +177,22 @@ const payrollSlice = createSlice({
       .addCase(fetchPayrollsByEmployeeId.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Something went wrong";
+      })
+
+      .addCase(fetchPayrollByEmployeeIdAndYear.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPayrollByEmployeeIdAndYear.fulfilled, (state, action) => {
+        state.employeePayrollsByYear = action.payload.data; // Populate the new payroll state
+        state.total = action.payload.total;
+        state.loading = false;
+      })
+      .addCase(fetchPayrollByEmployeeIdAndYear.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Something went wrong';
       });
+
   }
 });
 

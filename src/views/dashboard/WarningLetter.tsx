@@ -1,256 +1,279 @@
-'use client'
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    Box,
     Card,
     CardContent,
     CardHeader,
-    Typography,
+    Container,
     Grid,
-    Box,
-    LinearProgress,
-    Button,
-    styled
+    Typography,
+    useTheme,
+    alpha,
+    IconButton
 } from '@mui/material';
 import {
-    School,
-    LibraryBooks,
-    EmojiEvents,
-    CastForEducation,
-    Verified
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
+    Tooltip,
+    Legend
+} from 'recharts';
+import {
+    Wallet,
+    CurrencyRupee,
 } from '@mui/icons-material';
+import { MoreVert } from '@mui/icons-material';
+import ExpenseForm from '@/components/expenses/ExpenseForm';
 
-const LearningCard = styled(Card)`
-    background: linear-gradient(to right bottom, #ffffff, #f8f9fa);
-    border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    
-    &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    }
-`;
+// Interfaces for financial data
+export interface FinancialCategory {
+    name: string;
+    value: number;
+    percentage: string;  // Include percentage from backend
+    color: string;
+}
 
-const LearningHeader = styled(CardHeader)`
-    background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
-    
-    .MuiCardHeader-title {
-        color: white;
-        font-weight: 600;
-        font-size: 1.4rem;
-    }
-`;
+const WarningLetter: React.FC = () => {
+    const theme = useTheme();
+    const [expenseData, setExpenseData] = useState<FinancialCategory[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [totalValue, setTotalValue] = useState<number | null>(null);
+    const [showForm, setShowForm] = useState(false); // State to manage form visibility
+    const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+    const [propData, setPropData] = useState({});
 
-const LearningBox = styled(Box)`
-    background-color: #f3e5f5;
-    border-radius: 12px;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-`;
+    // Get the employeeId from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const employeeId = user?.id;
 
-const LearningIcon = styled(Box)`
-    background-color: ${props => props.bgcolor || '#f3e5f5'};
-    color: ${props => props.iconcolor || '#8e24aa'};
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`;
-
-const ProgressBar = styled(LinearProgress)`
-    height: 10px;
-    border-radius: 5px;
-    background-color: #f0f0f0;
-    
-    .MuiLinearProgress-bar {
-        background: linear-gradient(to right, #8e24aa, #6a1b9a);
-    }
-`;
-
-const CertificateButton = styled(Button)`
-    && {
-        background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
-        color: white;
-        padding: 0.5rem 1.5rem;
-        border-radius: 25px;
-        text-transform: none;
-        margin-top: 0.5rem;
-        transition: all 0.3s ease;
-        
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(142, 36, 170, 0.3);
-        }
-    }
-`;
-
-const WarningLetter = () => {
-    // Sample learning and development data
-    const learningData = {
-        currentLearningPaths: [
-            {
-                title: 'Advanced Project Management',
-                progress: 65,
-                platform: 'LinkedIn Learning'
-            },
-            {
-                title: 'Data Analytics Fundamentals',
-                progress: 45,
-                platform: 'Coursera'
-            }
-        ],
-        completedCertifications: [
-            {
-                name: 'Agile Scrum Master',
-                issuer: 'Scrum Alliance',
-                date: 'September 2023'
-            },
-            {
-                name: 'Cloud Computing Basics',
-                issuer: 'AWS Certification',
-                date: 'June 2023'
-            }
-        ],
-        trainingBudget: {
-            used: 1200,
-            total: 2000
-        },
-        upcomingWorkshops: [
-            {
-                title: 'Leadership Communication Skills',
-                date: 'December 15, 2024',
-                time: '2:00 PM - 5:00 PM'
-            }
-        ]
+    const handleFormOpen = (expenseId?: string) => {
+        setSelectedExpenseId(expenseId || null);  // If expenseId is passed, open form to update, otherwise create new.
+        setShowForm(true);  // Show the form
     };
 
-    return (
-        <LearningCard elevation={3}>
-            <LearningHeader
+    const handleFormClose = () => {
+        setShowForm(false);  // Hide the form
+    };
 
-                title="Learning & Development"
-                subheader="Your continuous growth journey"
+    useEffect(() => {
+        if (employeeId) {
+            const fetchExpenseData = async () => {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/expenses/employee/${employeeId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch expense data');
+                    }
+                    const data = await response.json();
+
+                    setTotalValue(data.totalValue);
+                    setPropData(data)
+
+                    // Map the expense data to FinancialCategory format
+                    const formattedData = data.expenses.map((expense: any) => ({
+                        name: expense.name,
+                        value: expense.value,
+                        percentage: expense.percentage, // Use the percentage from the backend
+                        totalBudget: expense.totalValue,
+                        color: getColorForCategory(expense.name, theme)
+                    }));
+
+                    setExpenseData(formattedData);
+                } catch (err: any) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchExpenseData();
+        }
+    }, [employeeId, theme]);
+
+    // Function to get color based on category name
+    const getColorForCategory = (category: string, theme: any) => {
+        switch (category) {
+            case 'Housing':
+                return theme.palette.primary.main;
+            case 'Transportation':
+                return theme.palette.secondary.main;
+            case 'Food':
+                return theme.palette.error.main;
+            case 'Entertainment':
+                return theme.palette.success.main;
+            case 'Savings':
+                return theme.palette.warning.main;
+            default:
+                return theme.palette.grey[500];
+        }
+    };
+
+    // Render method for pie chart
+    const renderPieChart = (
+        data: FinancialCategory[],
+        title: string,
+        icon: React.ReactElement
+    ) => (
+        <Card
+            sx={{
+                height: '100%',
+                borderRadius: 3,
+                boxShadow: theme.shadows[4],
+                transition: 'transform 0.3s ease-in-out',
+                '&:hover': {
+                    transform: 'scale(1.02)',
+                },
+            }}
+        >
+
+            <CardHeader
+                avatar={icon}
+                action={
+                    // This will display the icon in the top-right corner of the header
+                    <IconButton
+                        sx={{ color: theme.palette.text.primary }}
+                        onClick={() => handleFormOpen()}
+                    >
+                        <MoreVert />
+                    </IconButton>
+                }
+                title={
+                    <Typography
+                        variant="h6"
+                        color="primary"
+                        sx={{
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                        }}
+                    >
+                        {title}
+                    </Typography>
+                }
+                sx={{
+                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                }}
             />
+
             <CardContent>
-                <Grid container spacing={3}>
-                    {/* Current Learning Paths */}
-                    <Grid item xs={12}>
-                        <LearningBox>
-                            <LearningIcon bgcolor="#f3e5f5" iconcolor="#8e24aa">
-                                <School />
-                            </LearningIcon>
-                            <Box width="100%">
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                    Current Learning Paths
-                                </Typography>
-                                {learningData.currentLearningPaths.map((path, index) => (
-                                    <Box key={index} mb={1}>
-                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                            <Typography variant="body2">
-                                                {path.title} ({path.platform})
-                                            </Typography>
-                                            <Typography variant="body2" color="textSecondary">
-                                                {path.progress}%
-                                            </Typography>
-                                        </Box>
-                                        <ProgressBar
-                                            variant="determinate"
-                                            value={path.progress}
-                                        />
-                                    </Box>
-                                ))}
-                            </Box>
-                        </LearningBox>
-                    </Grid>
-
-                    {/* Completed Certifications */}
-                    <Grid item xs={12}>
-                        <LearningBox>
-                            <LearningIcon bgcolor="#e8eaf6" iconcolor="#3f51b5">
-                                <EmojiEvents />
-                            </LearningIcon>
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                    Completed Certifications
-                                </Typography>
-                                {learningData.completedCertifications.map((cert, index) => (
-                                    <Box key={index} display="flex" alignItems="center" gap={1} mb={1}>
-                                        <Verified color="success" />
-                                        <Typography variant="body2">
-                                            {cert.name}
-                                            <Typography variant="caption" color="textSecondary" ml={1}>
-                                                ({cert.issuer}, {cert.date})
-                                            </Typography>
-                                        </Typography>
-                                    </Box>
-                                ))}
-                                <CertificateButton
-                                    variant="contained"
-                                    startIcon={<LibraryBooks />}
-                                >
-                                    View All Certificates
-                                </CertificateButton>
-                            </Box>
-                        </LearningBox>
-                    </Grid>
-
-                    {/* Training Budget */}
-                    <Grid item xs={12} md={6}>
-                        <LearningBox>
-                            <LearningIcon bgcolor="#e3f2fd" iconcolor="#2196f3">
-                                <CastForEducation />
-                            </LearningIcon>
-                            <Box width="100%">
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                    Training Budget
-                                </Typography>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2">
-                                        Used: ${learningData.trainingBudget.used}
-                                    </Typography>
-                                    <Typography variant="body2">
-                                        Total: ${learningData.trainingBudget.total}
-                                    </Typography>
-                                </Box>
-                                <ProgressBar
-                                    variant="determinate"
-                                    value={(learningData.trainingBudget.used / learningData.trainingBudget.total) * 100}
-                                />
-                            </Box>
-                        </LearningBox>
-                    </Grid>
-
-                    {/* Upcoming Workshops */}
-                    <Grid item xs={12} md={6}>
-                        <LearningBox>
-                            <LearningIcon bgcolor="#e8f5e9" iconcolor="#4caf50">
-                                <School />
-                            </LearningIcon>
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                    Upcoming Workshops
-                                </Typography>
-                                {learningData.upcomingWorkshops.map((workshop, index) => (
-                                    <Box key={index}>
-                                        <Typography variant="body2">
-                                            {workshop.title}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            {workshop.date} | {workshop.time}
-                                        </Typography>
-                                    </Box>
-                                ))}
-                            </Box>
-                        </LearningBox>
-                    </Grid>
-                </Grid>
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="53%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            formatter={(value, name) => [`${value}`, name]}
+                            contentStyle={{
+                                backgroundColor: theme.palette.background.paper,
+                                borderRadius: '12px',
+                                boxShadow: theme.shadows[2],
+                                border: 'none',
+                            }}
+                        />
+                        <Legend
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+                {showForm && (
+                    <ExpenseForm
+                        title={selectedExpenseId ? "Update Expense" : "Create Expense"}  // Title changes depending on create or update
+                        selectedExpenseId={selectedExpenseId}
+                        onClose={handleFormClose}
+                        propData={propData}
+                    />
+                )}
             </CardContent>
-        </LearningCard>
+        </Card>
+    );
+
+
+    // Loading and Error States
+    if (loading) {
+        return <Typography variant="h6">Loading data...</Typography>;
+    }
+
+    if (error) {
+        return <Typography variant="h6" color="error">{error}</Typography>;
+    }
+
+    return (
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            <Grid container spacing={3}>
+                {/* Expense Breakdown */}
+                <Grid item xs={12}>
+                    {renderPieChart(
+                        expenseData,
+                        'Expense Breakdown',
+                        <Wallet color="primary" sx={{ fontSize: 32 }} />
+                    )}
+
+                </Grid>
+
+
+                {/* Total Summary */}
+                <Grid item xs={12}>
+                    <Card
+                        sx={{
+                            borderRadius: 3,
+                            boxShadow: theme.shadows[4],
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                        }}
+                    >
+                        <CardContent>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={4}>
+                                    <CurrencyRupee
+                                        sx={{
+                                            fontSize: 48,
+                                            color: 'white',
+                                            opacity: 0.8
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={8}>
+                                    <Typography
+                                        variant="h4"
+                                        sx={{
+                                            color: 'white',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        {totalValue?.toLocaleString()}
+                                    </Typography>
+                                    <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                            color: 'rgba(255,255,255,0.7)'
+                                        }}
+                                    >
+                                        Total Monthly Budget
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
+
+
+        </Container>
     );
 };
 

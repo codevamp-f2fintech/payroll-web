@@ -31,12 +31,14 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     type: '',
     amount: 0,
     description: '',
+    otherType: '', // Add otherType field for the "Others" input
   });
 
   const [errors, setErrors] = useState({
     salarytype: '',
     type: '',
     amount: '',
+    otherType: '', // Add otherType error validation
   });
 
   const salaryComponentTypes1 = [
@@ -67,6 +69,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
           type: selected.type,
           amount: selected.amount,
           description: selected.description,
+          otherType: selected.otherType || '', // Set otherType based on existing value
         });
       }
     }
@@ -74,7 +77,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
 
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { salarytype: '', type: '', amount: '' };
+    const newErrors = { salarytype: '', type: '', amount: '', otherType: '' };
 
     if (!formData.salarytype.trim()) {
       newErrors.salarytype = 'Salary type is required';
@@ -88,6 +91,10 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
       newErrors.amount = 'Amount is required';
       isValid = false;
     }
+    if (formData.type === 'Others' && !formData.otherType.trim()) {
+      newErrors.otherType = 'Please specify the other type';
+      isValid = false;
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -98,7 +105,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     setFormData((prevState) => ({
       ...prevState,
       [name!]: value,
-      ...(name === 'salarytype' && { type: '' }),
+      ...(name === 'salarytype' && { type: '', otherType: '' }), // Reset otherType if salarytype changes
     }));
   };
 
@@ -171,19 +178,38 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Amount (In Rupees)"
-            name="amount"
-            type="number"
-            value={formData.amount}
-            onChange={handleChange}
-            required
-            error={!!errors.amount}
-            helperText={errors.amount}
-          />
+
+        {/* Amount & Other Type Field in the same row */}
+        <Grid container item xs={12} spacing={3}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Amount (In Rupees)"
+              name="amount"
+              type="number"
+              value={formData.amount}
+              onChange={handleChange}
+              required
+              error={!!errors.amount}
+              helperText={errors.amount}
+            />
+          </Grid>
+          {formData.type === 'Others' && (
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Please Specify"
+                name="otherType"
+                value={formData.otherType}
+                onChange={handleChange}
+                required
+                error={!!errors.otherType}
+                helperText={errors.otherType}
+              />
+            </Grid>
+          )}
         </Grid>
+
         <Grid item xs={12}>
           <TextField
             fullWidth
@@ -195,6 +221,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             rows={4}
           />
         </Grid>
+
         <Grid item xs={12}>
           <Button
             variant="contained"
