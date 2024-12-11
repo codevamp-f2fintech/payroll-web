@@ -34,7 +34,9 @@ export interface Payroll {
   status: string;
   processedBy: string;
   netSalary: number;
-  createdAt: string
+  createdAt: string;
+  payPeriod: string;
+  payDate: string
 }
 
 interface PayrollState {
@@ -113,9 +115,9 @@ export const fetchPayrollsByEmployeeId = createAsyncThunk<
 export const fetchPayrollByEmployeeIdAndYear = createAsyncThunk<{
   data: Payroll[];
   total: number;
-}, { employeeId: string; year: number; page?: number; limit?: number }>(
+}, { employeeId: string; year: number; keyword?: string; page?: number; limit?: number }>(
   'payroll/fetchPayrollByEmployeeIdAndYear',
-  async ({ employeeId, year, page = 1, limit = 10 }: { employeeId: string; year: number; page: number; limit: number }) => {
+  async ({ employeeId, year, keyword, page = 1, limit = 10 }: { employeeId: string; year: number; keyword: string; page: number; limit: number }) => {
     if (!employeeId) {
       throw new Error('Employee ID is required');
     }
@@ -123,6 +125,7 @@ export const fetchPayrollByEmployeeIdAndYear = createAsyncThunk<{
     // Build query parameters
     const queryParams = new URLSearchParams();
     queryParams.append('page', page.toString());
+    if (keyword) queryParams.append('keyword', encodeURIComponent(keyword));
     queryParams.append('limit', limit.toString());
     queryParams.append('year', year.toString());
 

@@ -101,6 +101,13 @@ const AdminDashboard: React.FC = () => {
     const [page, setPage] = useState(0)
     const [rowsPerPage, setRowsPerPage] = useState(5)
 
+    const handlePayPeriodChange = (e) => {
+        const { value } = e.target;
+        const [year, month] = value.split('-');
+        setSelectedYear(year);
+        setSelectedMonth(month);
+    };
+
     useEffect(() => {
         dispatch(fetchEmployees({ page: page + 1, limit: rowsPerPage, search: searchTerm }))
     }, [dispatch, page, rowsPerPage, searchTerm])
@@ -199,7 +206,7 @@ const AdminDashboard: React.FC = () => {
     const handleExportEmployees = () => {
         const csvContent = [
             ['ID', 'Name', 'Email', 'Department', 'Position', 'Status'],
-            ...allEmployees.map(emp => [emp.code, emp.first_name, emp.email, emp.department, emp.designation, emp.status])
+            ...allEmployees.map(emp => [emp.code, `${emp.first_name} ${emp.last_name}`, emp.email, emp.department, emp.designation, emp.status])
         ]
             .map(e => e.join(','))
             .join('\n')
@@ -242,28 +249,24 @@ const AdminDashboard: React.FC = () => {
                         </MenuItem>
                     ))}
                 </Select> */}
-                <Select
-                    value={selectedMonth}
-                    onChange={e => setSelectedMonth(Number(e.target.value))}
-                    displayEmpty
-                    sx={{ width: 120 }}
-                >
-                    {months.map((monthName, index) => (
-                        <MenuItem key={index} value={index + 1}>
-                            {monthName}
-                        </MenuItem>
-                    ))}
-                </Select>
-
-                {/* Year Dropdown */}
-                <Select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))} sx={{ width: 120 }}>
-                    {years.map(year => (
-                        <MenuItem key={year} value={year}>
-                            {year}
-                        </MenuItem>
-                    ))}
-                </Select>
-
+                <Grid item xs={12} md={4}>
+                    <TextField
+                        fullWidth
+                        label="Pay Period"
+                        name="payPeriod"
+                        type="month"
+                        value={selectedYear && selectedMonth ? `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}` : ''}
+                        onChange={handlePayPeriodChange}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                            },
+                        }}
+                    />
+                </Grid>
                 <Button variant='contained' color='primary' startIcon={<DownloadIcon />} onClick={handleExportEmployees}>
                     Export
                 </Button>

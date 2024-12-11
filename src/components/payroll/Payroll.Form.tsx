@@ -23,6 +23,8 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     status: 'pending',
     processedBy: '',
     netSalary: '',
+    payPeriod: new Date().toISOString().slice(0, 7),
+    payDate: '', // New field
 
   });
 
@@ -32,6 +34,8 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     status: '',
     processedBy: '',
     netSalary: '',
+    payPeriod: '', // New field
+    payDate: '', // New field
   });
 
 
@@ -97,6 +101,8 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
           status: selected.status,
           processedBy: selected.processedBy,
           netSalary: selected.netSalary,
+          payPeriod: selected.payPeriod || '', // Set payPeriod
+          payDate: selected.payDate || '', // Set payDate
         });
         const selectedTemplateData = salaryTemplates.find(
           (template) =>
@@ -116,6 +122,8 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
       status: '',
       processedBy: '',
       netSalary: '',
+      payPeriod: '', // Validation for payPeriod
+      payDate: '', // Validation for payDate
     };
 
     if (!formData.employeeId.trim()) {
@@ -144,6 +152,15 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
     //   newErrors.netSalary = 'Total is required';
     //   isValid = false;
     // }
+    if (!formData.payPeriod) {
+      newErrors.payPeriod = 'Pay Period is required';
+      isValid = false;
+    }
+
+    if (!formData.payDate) {
+      newErrors.payDate = 'Pay Date is required';
+      isValid = false;
+    }
 
 
     setErrors(newErrors);
@@ -427,6 +444,36 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
                 helperText={errors.netSalary}
               />
             </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Pay Period"
+                name="payPeriod"
+                type="month"
+                value={formData.payPeriod}
+                onChange={handleChange}
+                error={false} // You can add error handling if needed
+                helperText={false} // You can add helper text if needed
+                InputLabelProps={{
+                  shrink: true, // Ensures the label stays above the input field
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Pay Date"
+                name="payDate"
+                type="date"
+                value={formData.payDate}
+                onChange={handleChange}
+                error={!!errors.payDate}
+                helperText={errors.payDate}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
 
           </>
         )}
@@ -449,6 +496,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
           </FormControl>
         </Grid>
 
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -462,6 +510,7 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
             FormHelperTextProps={{ style: { color: 'red' } }}
           />
         </Grid>
+
         <Grid item xs={12}>
           <Button
             style={{

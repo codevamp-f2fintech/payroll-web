@@ -1,18 +1,16 @@
 "use client"
 import AddPayrollForm from "@/components/payroll/Payroll.Form"
-import { Box, Button, Dialog, DialogContent, FormControl, Grid, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material"
+import { Box, Button, Dialog, DialogContent, Grid, InputAdornment, TextField, Typography, Paper, Container } from "@mui/material"
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import { SetStateAction, useCallback, useEffect, useMemo, useState } from "react"
-import { DataGrid } from "@mui/x-data-grid"
+import { DataGrid, GridColDef } from "@mui/x-data-grid"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { fetchPayrollByEmployeeIdAndYear, fetchPayrolls } from "@/redux/features/payroll/payrollSlice"
-import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
-import { debounce, template } from "lodash"
-
+import { debounce } from "lodash"
 
 const PayrollGrid = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -31,7 +29,6 @@ const PayrollGrid = () => {
 
   const rows = user.role === '1' ? payrolls : employeePayrollsByYear
 
-
   const debouncedFetch = useCallback(
     debounce(() => {
       const params = {
@@ -39,47 +36,39 @@ const PayrollGrid = () => {
         limit,
         keyword: selectedKeyword,
         year: selectedYear,
-        month: selectedMonth, // Ensure selectedMonth is passed as well
+        month: selectedMonth,
       };
 
       console.log("Fetching payrolls with params:", params);
 
       if (userRole === '1') {
-        dispatch(fetchPayrolls(params)); // Fetch for admin
+        dispatch(fetchPayrolls(params));
       } else {
-        dispatch(fetchPayrollByEmployeeIdAndYear({ employeeId: userId, year: selectedYear, month: selectedMonth, page, limit, keyword: selectedKeyword })); // Fetch for employee
+        dispatch(fetchPayrollByEmployeeIdAndYear({ employeeId: userId, year: selectedYear, page, limit, keyword: selectedKeyword }));
       }
     }, 300),
-    [page, limit, selectedKeyword, userRole, userId, selectedYear, selectedMonth] // Include selectedMonth here
+    [page, limit, selectedKeyword, userRole, userId, selectedYear, selectedMonth]
   );
-
 
   useEffect(() => {
     debouncedFetch();
     return debouncedFetch.cancel;
   }, [page, limit, selectedKeyword, debouncedFetch]);
 
-  const handleYearChange = (e) => {
-    setSelectedYear(e.target.value);
-    // You can trigger a fetch for payrolls based on the selected year
-    debouncedFetch(); // Assuming the year is included in the debounced fetch
+  const handlePayPeriodChange = (e) => {
+    const { value } = e.target;
+    const [year, month] = value.split('-');
+    setSelectedYear(year);
+    setSelectedMonth(month);
   };
-  const handleMonthChange = event => {
-    setSelectedMonth(event.target.value)
-
-  }
-
 
   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
     setSelectedKeyword(e.target.value)
   }
-  const handlePageChange = (newPage: number, newPageSize: number) => {
-    setPage(newPage + 1);
-    setLimit(newPageSize);
-  };
 
   const handlePaginationModelChange = (params: { page: number; pageSize: number }) => {
-    handlePageChange(params.page, params.pageSize);
+    setPage(params.page + 1);
+    setLimit(params.pageSize);
     debouncedFetch();
   };
 
@@ -87,67 +76,59 @@ const PayrollGrid = () => {
     setSelectedPayrolls(null)
     setShowForm(true)
   }
+
   const handleEditClick = (id: SetStateAction<null>) => {
     setSelectedPayrolls(id);
     setShowForm(true);
   };
+
   const handleCloseForm = () => {
     setShowForm(false)
   }
 
   const generateColumns = useMemo(() => {
-    // Conditionally render the Edit column based on userRole
-    const columns = [
+    const columns: GridColDef[] = [
       ...(user.role === '1' ? [
         {
           field: 'employeeId',
-          headerName: 'Employee Name',
+          headerName: 'Employee',
           flex: 1,
           headerAlign: 'center',
-          headerClassName: 'super-app-theme--header',
+          align: 'center',
           renderCell: (params) => {
             const employee = params.row.employee;
             return employee ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                }}
-              >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img
                   src={employee.image}
                   alt={`${employee.first_name} ${employee.last_name}`}
-                  style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
+                  style={{ width: 40, height: 40, borderRadius: '50%', marginRight: 10, objectFit: 'cover' }}
                 />
-                <span>{employee.first_name} {employee.last_name}</span>
-              </div>
+                <Typography variant="body2">
+                  {employee.first_name} {employee.last_name}
+                </Typography>
+              </Box>
             ) : (
-              <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+              <Typography variant="body2">N/A</Typography>
             );
           },
         },
       ] : []),
-
       {
         field: 'salaryTemplate',
         headerName: 'Salary Template',
         flex: 1,
         headerAlign: 'center',
         align: 'center',
-        renderCell: (params) => {
-          const name = params.row.salaryTemplate.name
-          return (
-            <Typography>
-              {name}
-            </Typography>
-          )
-        }
+        renderCell: (params) => (
+          <Typography variant="body2">
+            {params.row.salaryTemplate.name}
+          </Typography>
+        )
       },
       {
         field: 'createdAt',
-        headerName: 'PayRoll',
+        headerName: 'PayRoll Period',
         flex: 1,
         headerAlign: 'center',
         align: 'center',
@@ -156,7 +137,21 @@ const PayrollGrid = () => {
             month: 'long',
             year: 'numeric',
           });
-          return <Typography style={{ fontWeight: 'bold', color: 'rgb(46 38 61 / 90%)', }} variant="body2">{formattedDate}</Typography>;
+          return (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 'bold',
+                color: 'primary.main',
+
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 2
+              }}
+            >
+              {formattedDate}
+            </Typography>
+          );
         },
       },
       {
@@ -164,37 +159,102 @@ const PayrollGrid = () => {
         headerName: 'Status',
         flex: 1,
         headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
         align: 'center',
+        renderCell: (params) => {
+          const statusColors = {
+            pending: {
+              bg: 'warning.light',
+              color: 'white'
+            },
+            paid: {
+              bg: 'success.light',
+              color: 'white'
+            },
+            processed: {
+              bg: 'info.light',
+              color: 'white'
+            },
+            default: {
+              bg: 'grey.200',
+              color: 'grey.800'
+            }
+          };
+
+          const statusValue = params.value.toLowerCase();
+          const { bg, color } = statusColors[statusValue] || statusColors.default;
+
+          return (
+            <Typography
+              variant="body2"
+              sx={{
+                backgroundColor: bg,
+                color: color,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: 2,
+                textTransform: 'capitalize',
+                fontWeight: 'medium'
+              }}
+            >
+              {params.value}
+            </Typography>
+          );
+        }
       },
       {
         field: 'netSalary',
         headerName: 'Net Salary',
         flex: 1,
         headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
         align: 'center',
+        renderCell: (params) => (
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 'bold',
+              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            <span style={{ fontSize: '1rem' }}>₹</span>
+            {params.value.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </Typography>
+        )
       },
       {
         field: 'processedBy',
-        headerName: 'ProcessedBy',
+        headerName: 'Processed By',
         flex: 1,
         headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
         align: 'center',
       },
     ];
 
-    // Only add the Edit column if the user role is '1'
     if (userRole === '1') {
       columns.push({
         field: 'edit',
-        headerName: 'Edit',
+        headerName: 'Actions',
         sortable: false,
         width: 150,
+        headerAlign: 'center',
+        align: 'center',
         renderCell: ({ row: { _id } }) => (
-          <Button color="info" variant="contained" onClick={() => handleEditClick(_id)}>
-            Edit
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => handleEditClick(_id)}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            Edit Payroll
           </Button>
         ),
       });
@@ -204,11 +264,9 @@ const PayrollGrid = () => {
   }, [payrolls, userRole]);
 
   return (
-    <>
-      <ToastContainer
-        position="top-center"
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <ToastContainer position="top-center" />
 
-      />
       <Dialog open={showForm} onClose={handleCloseForm} fullWidth maxWidth='md'>
         <DialogContent>
           <AddPayrollForm
@@ -222,119 +280,127 @@ const PayrollGrid = () => {
           />
         </DialogContent>
       </Dialog>
-      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
-        <Box>
-          <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
-            Payroll
-          </Typography>
-          <Typography style={{ fontSize: '1em', fontWeight: 'bold' }} variant='subtitle1' gutterBottom>
-            Dashboard / Payroll
-          </Typography>
+
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Box display='flex' justifyContent='space-between' alignItems='center' mb={3}>
+          <Box>
+            <Typography variant='h4' color="primary" gutterBottom>
+              Payroll Management
+            </Typography>
+            <Typography variant='subtitle1' color="text.secondary">
+              Dashboard / Payroll Overview
+            </Typography>
+          </Box>
+          {userRole === '1' && (
+            <Button
+              variant='contained'
+              color='primary'
+              startIcon={<AddIcon />}
+              onClick={handleAddClick}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                py: 1.2,
+                px: 3
+              }}
+            >
+              Add New Payroll
+            </Button>
+          )}
         </Box>
-        {userRole === '1' && <Box display='flex' alignItems='center'>
-          <Button
-            style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
-            variant='contained'
-            color='warning'
-            startIcon={<AddIcon />}
-            onClick={handleAddClick}
-          >
-            Add Payroll
-          </Button>
 
-        </Box>}
-      </Box>
-      <Grid container spacing={6} alignItems='center' mb={2}>
+        <Grid container spacing={2} alignItems="center" mb={3}>
+          {/* When userRole is '1', display both Search Payrolls and Pay Period */}
+          {userRole === '1' && (
+            <>
+              <Grid item xs={12} md={8}>
+                <TextField
+                  fullWidth
+                  label="Search Payrolls"
+                  variant="outlined"
+                  value={selectedKeyword}
+                  onChange={handleInputChange}
+                  InputProps={{
+                    sx: {
+                      borderRadius: 2,
+                    },
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <SearchIcon color="primary" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Pay Period"
+                  name="payPeriod"
+                  type="month"
+                  value={selectedYear && selectedMonth ? `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}` : ''}
+                  onChange={handlePayPeriodChange}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+              </Grid>
+            </>
+          )}
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='search'
-            variant='outlined'
-            value={selectedKeyword}
-            onChange={handleInputChange}
-            InputProps={{
-              sx: {
-                borderRadius: '50px'
-              },
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-          />
+          {/* When userRole is NOT '1', display only the Pay Period field on the right side */}
+          {userRole !== '1' && (
+            <Grid item xs={12} md={4} sx={{ ml: 'auto' }}>  {/* Align to the right side */}
+              <TextField
+                fullWidth
+                label="Pay Period"
+                name="payPeriod"
+                type="month"
+                value={selectedYear && selectedMonth ? `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}` : ''}
+                onChange={handlePayPeriodChange}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+            </Grid>
+          )}
         </Grid>
 
-        {userRole === '1' && <Grid item xs={12} md={3}>
-          <FormControl sx={{ marginBottom: 2, width: '100%' }}>
-            <InputLabel id='month-select-label'>Select Month</InputLabel>
-            <Select
-              labelId='month-select-label'
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              label='Select Month'
-              fullWidth
-            >
-              <MenuItem value={1}>January</MenuItem>
-              <MenuItem value={2}>February</MenuItem>
-              <MenuItem value={3}>March</MenuItem>
-              <MenuItem value={4}>April</MenuItem>
-              <MenuItem value={5}>May</MenuItem>
-              <MenuItem value={6}>June</MenuItem>
-              <MenuItem value={7}>July</MenuItem>
-              <MenuItem value={8}>August</MenuItem>
-              <MenuItem value={9}>September</MenuItem>
-              <MenuItem value={10}>October</MenuItem>
-              <MenuItem value={11}>November</MenuItem>
-              <MenuItem value={12}>December</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        }
-        <Grid item xs={12} md={3}>
-          <FormControl fullWidth>
-            <InputLabel>Year</InputLabel>
-            <Select
-              value={selectedYear}
-              label="Year"
-              onChange={handleYearChange}
-            >
-              <MenuItem value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</MenuItem>
-              <MenuItem value={new Date().getFullYear()}>{new Date().getFullYear()}</MenuItem>
-              <MenuItem value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-      </Grid>
-
-      <Box sx={{ width: '100%', position: 'relative' }}>
 
         <DataGrid
           getRowHeight={() => 'auto'}
           sx={{
             height: 600,
-            '& .super-app-theme--header': {
-              fontSize: 17,
-              fontWeight: 600,
-              alignItems: 'center'
-            },
-            '& .mui-yrdy0g-MuiDataGrid-columnHeaderRow ': {
-              background: '#2e7d32 !important',
-              color: 'white'
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'secondary',
+              color: 'blue',
+              fontWeight: 'bold',
             },
             '& .MuiDataGrid-cell': {
-              fontSize: '10',
-              align: 'center'
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             },
             '& .MuiDataGrid-row': {
-              fontWeight: '600',
-              fontSize: '14px',
-              boxSizing: 'border-box',
+              '&:nth-of-type(even)': {
+                backgroundColor: 'action.hover',
+              },
+              '&:hover': {
+                backgroundColor: 'action.selected',
+              },
             },
           }}
-
           rows={rows}
           columns={generateColumns}
           getRowId={(row) => row._id}
@@ -344,12 +410,9 @@ const PayrollGrid = () => {
           pageSizeOptions={[10, 20, 30]}
           paginationModel={{ page: page - 1, pageSize: limit }}
         />
-      </Box>
-    </>
+      </Paper>
+    </Container>
   )
 }
 
 export default PayrollGrid
-
-
-
