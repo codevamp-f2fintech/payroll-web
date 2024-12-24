@@ -36,6 +36,7 @@ const user = JSON.parse(localStorage.getItem('user') || '{}')
 export const PayrollGenerator = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedKeyword, setSelectedKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
@@ -59,7 +60,7 @@ export const PayrollGenerator = () => {
             limit,
             keyword: selectedKeyword,
             month: selectedMonth,
-            year: new Date().getFullYear()
+            year: selectedYear
           })
         )
       } else if (employeeId) {
@@ -69,7 +70,7 @@ export const PayrollGenerator = () => {
             page,
             limit,
             month: selectedMonth,
-            year: new Date().getFullYear()
+            year: selectedYear
           })
         )
       }
@@ -87,9 +88,11 @@ export const PayrollGenerator = () => {
     setLimit(params.pageSize)
   }
 
-  const handleMonthChange = event => {
-    setSelectedMonth(event.target.value)
-    setSelectedEmployee(null)
+  const handlePayPeriodChange = e => {
+    const { value } = e.target
+    const [year, month] = value.split('-')
+    setSelectedYear(year)
+    setSelectedMonth(month)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,7 +171,6 @@ export const PayrollGenerator = () => {
     }))
 
     const baseSalary = employee?.salaryTemplate.baseSalary
-
 
     // Calculate total earnings, deductions, and net payable
     const totalEarnings = earnings.reduce((acc, curr) => acc + curr.amount, 0)
@@ -441,7 +443,6 @@ export const PayrollGenerator = () => {
               </table>
             </Grid>
 
-
             {/* Deductions Section */}
             <Grid item xs={6} sx={{ paddingBottom: '20px' }}>
               <Typography
@@ -561,84 +562,154 @@ export const PayrollGenerator = () => {
   })
 
   const columns: GridColDef[] = [
-    ...(user.role === '1' ? [
-      {
-        field: 'employee',
-        headerName: 'Employee',
-        renderCell: (params) => {
-          const { first_name, last_name, image } = params.row;
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Avatar src={image} alt={`${first_name} ${last_name}`} sx={{ marginRight: 2, width: 30, height: 30 }} />
-              <Typography variant="body2">
-                {first_name} {last_name}
-              </Typography>
-            </Box>
-          );
-        },
-        width: 200, // Fixed width for this column
-      },
-    ] : []),
+    ...(user.role === '1'
+      ? [
+        {
+          field: 'employee',
+          headerName: 'Employee',
+          flex: 1,
+          headerAlign: 'center',
+          align: 'center',
+          renderCell: params => {
+            const { first_name, last_name, image } = params.row
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Avatar
+                  src={image}
+                  alt={`${first_name} ${last_name}`}
+                  style={{ width: 40, height: 40, borderRadius: '50%', marginRight: 10, objectFit: 'cover' }}
+                />
+                <Typography variant='body2'>
+                  {first_name} {last_name}
+                </Typography>
+              </Box>
+            )
+          },
+          width: 200 // Fixed width for this column
+        }
+      ]
+      : []),
 
-    ...(user.role === '1' ? [
-      {
-        field: 'code',
-        headerName: 'Employee Code',
-        headerAlign: 'center',
-        align: 'center',
-        width: 180, // Set width for better control
-      },
-    ] : []),
-
-    {
-      field: 'netSalary',
-      headerName: 'Total Net Salary',
-      headerAlign: 'center',
-      align: 'center',
-      width: 180, // Fixed width for net salary column
-    },
     {
       field: 'createdAt',
-      headerName: 'PayRoll',
-      flex: 1,  // Flex to allow it to take up available space
+      headerName: 'PayRoll Period',
+      flex: 1,
       headerAlign: 'center',
       align: 'center',
-      renderCell: (params) => {
+      renderCell: params => {
         const formattedDate = new Date(params.row.createdAt).toLocaleDateString('en-GB', {
           month: 'long',
-          year: 'numeric',
-        });
-        return <Typography style={{ fontWeight: 'bold', color: 'rgb(46 38 61 / 90%)', textAlign: 'center', marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} variant="body2">{formattedDate}</Typography>;
-      },
+          year: 'numeric'
+        })
+        return (
+          <Typography
+            variant='body2'
+            sx={{
+              fontWeight: 'bold',
+              color: 'primary.main',
+
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2
+            }}
+          >
+            {formattedDate}
+          </Typography>
+        )
+      }
     },
     {
       field: 'status',
       headerName: 'Status',
+      flex: 1,
       headerAlign: 'center',
       align: 'center',
-      width: 150,  // Fixed width for Status
+      renderCell: params => {
+        const statusColors = {
+          pending: {
+            bg: 'warning.light',
+            color: 'white'
+          },
+          paid: {
+            bg: 'success.light',
+            color: 'white'
+          },
+          processed: {
+            bg: 'info.light',
+            color: 'white'
+          },
+          default: {
+            bg: 'grey.200',
+            color: 'grey.800'
+          }
+        }
+
+        const statusValue = params.value.toLowerCase()
+        const { bg, color } = statusColors[statusValue] || statusColors.default
+
+        return (
+          <Typography
+            variant='body2'
+            sx={{
+              backgroundColor: bg,
+              color: color,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2,
+              textTransform: 'capitalize',
+              fontWeight: 'medium'
+            }}
+          >
+            {params.value}
+          </Typography>
+        )
+      }
+    },
+    {
+      field: 'netSalary',
+      headerName: 'Net Salary',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      renderCell: params => (
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 'bold',
+            color: 'text.primary',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5
+          }}
+        >
+          <span style={{ fontSize: '1rem' }}>₹</span>
+          {params.value.toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })}
+        </Typography>
+      )
     },
     {
       field: 'processedBy',
       headerName: 'Processed By',
+      flex: 1,
       headerAlign: 'center',
-      align: 'center',
-      width: 180,  // Fixed width for Processed By
+      align: 'center'
     },
     {
       field: 'generate',
       headerName: 'Generate PaySlip',
       headerAlign: 'center',
       align: 'center',
-      renderCell: (params) => (
-        <Button variant="contained" color="primary" onClick={() => handleGeneratePrint(params.row)}>
+      renderCell: params => (
+        <Button variant='contained' color='primary' onClick={() => handleGeneratePrint(params.row)}>
           Generate
         </Button>
       ),
-      width: 180, // Set fixed width for button column
-    },
-  ];
-
+      width: 180 // Set fixed width for button column
+    }
+  ]
 
   console.log('rows', rows)
 
@@ -671,31 +742,6 @@ export const PayrollGenerator = () => {
       <Box
         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '250px', marginLeft: 'auto' }}
       >
-        {/* Select Month Dropdown */}
-        <FormControl sx={{ marginBottom: 2, width: '100%' }}>
-          <InputLabel id='month-select-label'>Select Month</InputLabel>
-          <Select
-            labelId='month-select-label'
-            value={selectedMonth}
-            onChange={handleMonthChange}
-            label='Select Month'
-            fullWidth
-          >
-            <MenuItem value={1}>January</MenuItem>
-            <MenuItem value={2}>February</MenuItem>
-            <MenuItem value={3}>March</MenuItem>
-            <MenuItem value={4}>April</MenuItem>
-            <MenuItem value={5}>May</MenuItem>
-            <MenuItem value={6}>June</MenuItem>
-            <MenuItem value={7}>July</MenuItem>
-            <MenuItem value={8}>August</MenuItem>
-            <MenuItem value={9}>September</MenuItem>
-            <MenuItem value={10}>October</MenuItem>
-            <MenuItem value={11}>November</MenuItem>
-            <MenuItem value={12}>December</MenuItem>
-          </Select>
-        </FormControl>
-
         {/* Download Payslip Button */}
         <Button
           variant='contained'
@@ -711,8 +757,8 @@ export const PayrollGenerator = () => {
       <Typography variant='h4' gutterBottom>
         Employee Payslip
       </Typography>
-      <Grid container spacing={2} alignItems='center' mb={2}>
-        <Grid item xs={12} md={6}>
+      <Grid display={'flex'} container spacing={2} alignItems='center' mb={2}>
+        <Grid item xs={12} md={8}>
           <TextField
             fullWidth
             label='search'
@@ -731,28 +777,48 @@ export const PayrollGenerator = () => {
             }}
           />
         </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            label='Pay Period'
+            name='payPeriod'
+            type='month'
+            value={selectedYear && selectedMonth ? `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}` : ''}
+            onChange={handlePayPeriodChange}
+            InputLabelProps={{
+              shrink: true
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2
+              }
+            }}
+          />
+        </Grid>
       </Grid>
       <div>
         <DataGrid
+          getRowHeight={() => 'auto'}
           sx={{
-            height: 600,
-            '& .super-app-theme--header': {
-              fontSize: 17,
-              fontWeight: 600,
-              alignItems: 'center'
-            },
-            '& .mui-yrdy0g-MuiDataGrid-columnHeaderRow ': {
-              background: '#2e7d32 !important',
-              color: 'white'
+            height: 560,
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'secondary',
+              color: 'blue',
+              fontWeight: 'bold'
             },
             '& .MuiDataGrid-cell': {
-              fontSize: '10',
-              align: 'center'
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             },
             '& .MuiDataGrid-row': {
-              fontWeight: '600',
-              fontSize: '14px',
-              boxSizing: 'border-box'
+              '&:nth-of-type(even)': {
+                backgroundColor: 'action.hover'
+              },
+              '&:hover': {
+                backgroundColor: 'action.selected'
+              }
             }
           }}
           rows={transformedPayrolls}
@@ -777,7 +843,6 @@ export const PayrollGenerator = () => {
         </div>
       )}
       <Button
-
         variant='contained'
         color='secondary'
         onClick={handleDownloadPdf}
