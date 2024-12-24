@@ -206,259 +206,260 @@ const AddPayrollForm = ({ payroll, handleClose, payrolls, debouncedFetch, page, 
   };
 
   return (
-    <><Box sx={{ flexGrow: 1, padding: 2 }}>
-      <Box display='flex' justifyContent='space-between' alignItems='center'>
-        <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
-          {payroll ? 'Edit payroll' : 'Add payroll'}
-        </Typography>
-        <IconButton onClick={handleClose}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-      <Grid container spacing={3}>
-        {/* Employee Selection */}
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            options={employees}
-            getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
-            renderOption={(props, option) => (
-              <li {...props}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar src={option.image} alt={option.first_name} sx={{ marginRight: 2 }} />
-                  <Typography>{option.first_name} {option.last_name}</Typography>
-                </Box>
-              </li>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Employee"
-                variant="outlined"
-                error={!!errors.employeeId}
-                helperText={errors.employeeId}
-              />
-            )}
-            value={employees.length > 0 ? employees.find(emp => emp._id === formData.employeeId) || null : null}
-            onChange={(event, newValue) => {
-              setFormData({
-                ...formData,
-                employeeId: newValue ? newValue._id : '',
-              });
-            }}
-            isOptionEqualToValue={(option, value) => option._id === value?._id}
-          />
-
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth required>
+    <>
+      <Box sx={{ flexGrow: 1, padding: 2 }}>
+        <Box display='flex' justifyContent='space-between' alignItems='center'>
+          <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
+            {payroll ? 'Edit payroll' : 'Add payroll'}
+          </Typography>
+          <IconButton onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Grid container spacing={3}>
+          {/* Employee Selection */}
+          <Grid item xs={12} md={6}>
             <Autocomplete
-              id="Selec Template"
-              options={salaryTemplates}
-              getOptionLabel={(option) => `${option.name}`}
+              options={employees}
+              getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
               renderOption={(props, option) => (
                 <li {...props}>
-                  {option.name}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar src={option.image} alt={option.first_name} sx={{ marginRight: 2 }} />
+                    <Typography>{option.first_name} {option.last_name}</Typography>
+                  </Box>
                 </li>
               )}
-              renderInput={(params) => <TextField {...params} label="Select Template" variant="outlined" />}
-              value={
-                salaryTemplates.find((template) =>
-                  template._id === (formData.salaryTemplate?._id || formData.salaryTemplate)
-                ) || null
-              }
-              onChange={handleTemplateChange}
-              isOptionEqualToValue={(option, value) => option._id === value._id} />
-            {errors.salaryTemplate && (
-              <Typography color="error">{errors.salaryTemplate}</Typography>
-            )}
-          </FormControl>
-        </Grid>
-
-        {selectedTemplate && (
-          <>
-
-            <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  border: '1px solid #ccc',
-                  borderRadius: '8px',
-                  padding: 4,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography textAlign={'center'}>Earning Types:</Typography>
-              </Box>
-              {selectedTemplate.earningTypes && selectedTemplate.earningTypes.length > 0 ? (
-                <>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Type</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {selectedTemplate.earningTypes.map((typeId) => {
-                          const details = typeDetails[typeId];
-                          return (
-                            <TableRow key={typeId}>
-                              <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
-                              <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        <TableRow>
-                          <TableCell>
-                            <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {selectedTemplate.earningTypes
-                                .reduce((total, typeId) => {
-                                  const details = typeDetails[typeId];
-                                  return total + (details?.amount || 0);
-                                }, 0)
-                                .toFixed(2)}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </>
-              ) : (
-                <Typography>N/A</Typography>
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Employee"
+                  variant="outlined"
+                  error={!!errors.employeeId}
+                  helperText={errors.employeeId}
+                />
               )}
-            </Grid>
+              value={employees.length > 0 ? employees.find(emp => emp._id === formData.employeeId) || null : null}
+              onChange={(event, newValue) => {
+                setFormData({
+                  ...formData,
+                  employeeId: newValue ? newValue._id : '',
+                });
+              }}
+              isOptionEqualToValue={(option, value) => option._id === value?._id}
+            />
 
-
-            <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  border: '1px solid #ccc',
-                  borderRadius: '8px',
-                  padding: 4,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography textAlign={'center'}>Deduction Types:</Typography>
-              </Box>
-              {selectedTemplate.deductionTypes && selectedTemplate.deductionTypes.length > 0 ? (
-                <>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Type</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {selectedTemplate.deductionTypes.map((typeId) => {
-                          const details = typeDetails[typeId];
-                          return (
-                            <TableRow key={typeId}>
-                              <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
-                              <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        <TableRow>
-                          <TableCell>
-                            <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {selectedTemplate.deductionTypes
-                                .reduce((total, typeId) => {
-                                  const details = typeDetails[typeId];
-                                  return total + (details?.amount || 0);
-                                }, 0)
-                                .toFixed(2)}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </>
-              ) : (
-                <Typography>N/A</Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth required>
+              <Autocomplete
+                id="Selec Template"
+                options={salaryTemplates}
+                getOptionLabel={(option) => `${option.name}`}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    {option.name}
+                  </li>
+                )}
+                renderInput={(params) => <TextField {...params} label="Select Template" variant="outlined" />}
+                value={
+                  salaryTemplates.find((template) =>
+                    template._id === (formData.salaryTemplate?._id || formData.salaryTemplate)
+                  ) || null
+                }
+                onChange={handleTemplateChange}
+                isOptionEqualToValue={(option, value) => option._id === value._id} />
+              {errors.salaryTemplate && (
+                <Typography color="error">{errors.salaryTemplate}</Typography>
               )}
-            </Grid>
+            </FormControl>
+          </Grid>
+
+          {selectedTemplate && (
+            <>
+
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    border: '1px solid #ccc',
+                    borderRadius: '8px',
+                    padding: 4,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography textAlign={'center'}>Earning Types:</Typography>
+                </Box>
+                {selectedTemplate.earningTypes && selectedTemplate.earningTypes.length > 0 ? (
+                  <>
+                    <TableContainer component={Paper}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Type</TableCell>
+                            <TableCell align="right">Amount</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {selectedTemplate.earningTypes.map((typeId) => {
+                            const details = typeDetails[typeId];
+                            return (
+                              <TableRow key={typeId}>
+                                <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
+                                <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          <TableRow>
+                            <TableCell>
+                              <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {selectedTemplate.earningTypes
+                                  .reduce((total, typeId) => {
+                                    const details = typeDetails[typeId];
+                                    return total + (details?.amount || 0);
+                                  }, 0)
+                                  .toFixed(2)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </>
+                ) : (
+                  <Typography>N/A</Typography>
+                )}
+              </Grid>
 
 
-            <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    border: '1px solid #ccc',
+                    borderRadius: '8px',
+                    padding: 4,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography textAlign={'center'}>Deduction Types:</Typography>
+                </Box>
+                {selectedTemplate.deductionTypes && selectedTemplate.deductionTypes.length > 0 ? (
+                  <>
+                    <TableContainer component={Paper}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Type</TableCell>
+                            <TableCell align="right">Amount</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {selectedTemplate.deductionTypes.map((typeId) => {
+                            const details = typeDetails[typeId];
+                            return (
+                              <TableRow key={typeId}>
+                                <TableCell>{details ? details.type : 'Unknown Type'}</TableCell>
+                                <TableCell align="right">{details ? details.amount : 'N/A'}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          <TableRow>
+                            <TableCell>
+                              <Typography variant="subtitle1" fontWeight="bold">Total</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="subtitle1" fontWeight="bold">
+                                {selectedTemplate.deductionTypes
+                                  .reduce((total, typeId) => {
+                                    const details = typeDetails[typeId];
+                                    return total + (details?.amount || 0);
+                                  }, 0)
+                                  .toFixed(2)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </>
+                ) : (
+                  <Typography>N/A</Typography>
+                )}
+              </Grid>
 
-              <TextField
-                fullWidth
-                label='Net Salary'
-                variant="outlined"
-                name='netSalary'
-                value={formData.netSalary}
+
+              <Grid item xs={12}>
+
+                <TextField
+                  fullWidth
+                  label='Net Salary'
+                  variant="outlined"
+                  name='netSalary'
+                  value={formData.netSalary}
+                  onChange={handleChange}
+                  InputProps={{
+                    startAdornment: <Typography sx={{ marginRight: 1 }}>₹</Typography>,
+                  }}
+                  error={!!errors.netSalary}
+                  helperText={errors.netSalary}
+                />
+              </Grid>
+
+            </>
+          )}
+
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth required error={!!errors.status}>
+              <InputLabel required id='demo-simple-select-label'>Status</InputLabel>
+              <Select
+                label='Status'
+                labelId='demo-simple-select-label'
+                name='status'
+                value={formData.status}
                 onChange={handleChange}
-                InputProps={{
-                  startAdornment: <Typography sx={{ marginRight: 1 }}>₹</Typography>,
-                }}
-                error={!!errors.netSalary}
-                helperText={errors.netSalary}
-              />
-            </Grid>
+              >
+                <MenuItem value='pending'>Pending</MenuItem>
+                <MenuItem value='processed'>Processed</MenuItem>
+                <MenuItem value='paid'>Paid</MenuItem>
+              </Select>
+              {errors.status && <Typography color="error">{errors.status}</Typography>}
+            </FormControl>
+          </Grid>
 
-          </>
-        )}
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth required error={!!errors.status}>
-            <InputLabel required id='demo-simple-select-label'>Status</InputLabel>
-            <Select
-              label='Status'
-              labelId='demo-simple-select-label'
-              name='status'
-              value={formData.status}
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label='Processed By'
+              name='processedBy'
+              value={formData.processedBy}
               onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              error={!!errors.processedBy}
+              helperText={errors.processedBy}
+              FormHelperTextProps={{ style: { color: 'red' } }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button
+              style={{
+                fontSize: '18px',
+                fontWeight: 600,
+                color: 'white',
+                padding: 15,
+                backgroundColor: '#2e7d32',
+                width: 200,
+              }}
+              variant='contained'
+              fullWidth
+              onClick={handleSubmit}
             >
-              <MenuItem value='pending'>Pending</MenuItem>
-              <MenuItem value='processed'>Processed</MenuItem>
-              <MenuItem value='paid'>Paid</MenuItem>
-            </Select>
-            {errors.status && <Typography color="error">{errors.status}</Typography>}
-          </FormControl>
+              {payroll ? 'UPDATE PAYROLL' : 'ADD PAYROLL'}
+            </Button>
+          </Grid>
         </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Processed By'
-            name='processedBy'
-            value={formData.processedBy}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            error={!!errors.processedBy}
-            helperText={errors.processedBy}
-            FormHelperTextProps={{ style: { color: 'red' } }}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Button
-            style={{
-              fontSize: '18px',
-              fontWeight: 600,
-              color: 'white',
-              padding: 15,
-              backgroundColor: '#2e7d32',
-              width: 200,
-            }}
-            variant='contained'
-            fullWidth
-            onClick={handleSubmit}
-          >
-            {payroll ? 'UPDATE PAYROLL' : 'ADD PAYROLL'}
-          </Button>
-        </Grid>
-      </Grid>
-    </Box></>
+      </Box></>
   );
 };
 

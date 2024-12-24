@@ -560,34 +560,78 @@ export const PayrollGenerator = () => {
     {
       field: 'employee',
       headerName: 'Employee',
-      width: 200,
-      renderCell: params => {
-        const { first_name, last_name, image } = params.row // Access employee data
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: (params) => {
+        const { first_name, last_name, image } = params.row; // Access employee data
 
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar src={image} alt={`${first_name} ${last_name}`} sx={{ marginRight: 2 }} />
-            <Typography variant='body2'>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center', // Center horizontally
+              textAlign: 'center', // Center text
+
+            }}
+          >
+            <Avatar
+              src={image}
+              alt={`${first_name} ${last_name}`}
+              sx={{ width: 30, height: 30, borderRadius: '50%', marginRight: 3 }} // Adjust size as needed
+            />
+            <span>
               {first_name} {last_name}
-            </Typography>
+            </span>
           </Box>
-        )
-      }
+        );
+      },
     },
 
-    { field: 'code', headerName: 'Employee Code', width: 150 },
     {
-      field: 'netSalary', headerName: 'Base Salary', width: 150,
+      field: 'code',
+      headerName: 'Employee Code',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'netSalary',
+      headerName: 'Base Salary',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
 
     },
-    { field: 'status', headerName: 'Status', width: 150 },
-    { field: 'processedBy', headerName: 'Processed By', width: 150 },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'processedBy',
+      headerName: 'Processed By',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
     {
       field: 'generate',
       headerName: 'Generate PaySlip',
-      width: 150,
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
       renderCell: params => (
-        <Button variant='contained' color='primary' onClick={() => handleGeneratePrint(params.row)}>
+        <Button sx={{ background: '#2e7d32' }} variant='contained' onClick={() => handleGeneratePrint(params.row)}>
           Generate
         </Button>
       )
@@ -620,7 +664,7 @@ export const PayrollGenerator = () => {
   }
 
   return (
-    <Box p={3}>
+    <>
       <Box
         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '250px', marginLeft: 'auto' }}
       >
@@ -661,9 +705,16 @@ export const PayrollGenerator = () => {
         </Button>
       </Box>
 
-      <Typography variant='h4' gutterBottom>
-        Employee Payslip
-      </Typography>
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
+        <Box>
+          <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
+            Salary Component
+          </Typography>
+          <Typography style={{ fontSize: '1em', fontWeight: 'bold' }} variant='subtitle1' gutterBottom>
+            Dashboard / Salary Component
+          </Typography>
+        </Box>
+      </Box>
       <Grid container spacing={2} alignItems='center' mb={2}>
         <Grid item xs={12} md={6}>
           <TextField
@@ -690,7 +741,7 @@ export const PayrollGenerator = () => {
           sx={{
             height: 600,
             '& .super-app-theme--header': {
-              fontSize: 17,
+              fontSize: 15,
               fontWeight: 600,
               alignItems: 'center'
             },
@@ -739,7 +790,7 @@ export const PayrollGenerator = () => {
       >
         Download Payslip (PDF)
       </Button>
-    </Box>
+    </>
   )
 }
 

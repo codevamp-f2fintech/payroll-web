@@ -14,8 +14,10 @@ import {
   FormControl,
   Autocomplete,
   DialogContent,
+  InputAdornment,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
@@ -34,6 +36,9 @@ const SalaryTemplate = () => {
   const [selectedKeyword, setSelectedKeyword] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userRole = user?.role;
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -332,13 +337,37 @@ const SalaryTemplate = () => {
   };
 
   const columns = [
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'baseSalary', headerName: 'Base Salary', flex: 1 },
-    { field: 'netSalary', headerName: 'Net Salary', flex: 1 },
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'baseSalary',
+      headerName: 'Base Salary',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'netSalary',
+      headerName: 'Net Salary',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
     {
       field: 'earningType',
       headerName: 'EarningType',
       flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
       renderCell: (params) => {
         const count = params.row.earningTypes.length
 
@@ -352,7 +381,12 @@ const SalaryTemplate = () => {
       }
     },
     {
-      field: 'deductionType', headerName: 'DeductionType', flex: 1,
+      field: 'deductionType',
+      headerName: 'DeductionType',
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
       renderCell: (params) => {
         const count = params.row.deductionTypes.length
         return (
@@ -364,14 +398,24 @@ const SalaryTemplate = () => {
         )
       }
     },
-    { field: 'description', headerName: 'Description', flex: 1 },
+    {
+      field: 'description',
+      headerName: 'Description',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
     {
       field: 'edit',
       headerName: 'Edit',
       sortable: false,
-      width: 150,
+      flex: 1,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
       renderCell: ({ row: { _id } }) => (
-        <Button color="info" variant="contained" onClick={() => handleTemplateEditClick(_id)}>
+        <Button sx={{ background: '#2e7d32' }} variant="contained" onClick={() => handleTemplateEditClick(_id)}>
           Edit
         </Button>
       ),
@@ -379,32 +423,82 @@ const SalaryTemplate = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Salary Templates</Typography>
-        <Button
-          style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
-          variant="contained" startIcon={<AddIcon />} onClick={handleTemplateAddClick}>
-          Add Salary Template
-        </Button>
+    <>
+      <ToastContainer position='top-center' />
+      <Dialog open={showForm} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogContent>
+          <AddSalaryTemplateForm id={selectedTemplate} handleClose={handleClose} />
+        </DialogContent>
+      </Dialog>
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
+        <Box>
+          <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
+            Salary Template
+          </Typography>
+          <Typography style={{ fontSize: '1em', fontWeight: 'bold' }} variant='subtitle1' gutterBottom>
+            Dashboard / Salary Template
+          </Typography>
+        </Box>
+        {userRole === '1' && <Box display='flex' alignItems='center'>
+          <Button
+            style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
+            variant='contained'
+            color='warning'
+            startIcon={<AddIcon />}
+            onClick={handleTemplateAddClick}
+          >
+            Add Salary Template
+          </Button>
+
+        </Box>}
       </Box>
-      <Box mb={2}>
-        <TextField
-          label="Search"
-          variant="outlined"
-          value={selectedKeyword}
-          onChange={handleInputChange}
-        />
-      </Box>
+      <Grid container spacing={6} alignItems='center' mb={2}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label='search'
+            variant='outlined'
+            value={selectedKeyword}
+            onChange={handleInputChange}
+            InputProps={{
+              sx: {
+                borderRadius: '50px'
+              },
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Grid>
+
+      </Grid>
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={salaryTemplates}
+          getRowHeight={() => 'auto'}
           sx={{
+            height: 600,
+            '& .super-app-theme--header': {
+              fontSize: 15,
+              fontWeight: 600,
+              alignItems: 'center'
+            },
             '& .mui-yrdy0g-MuiDataGrid-columnHeaderRow ': {
               background: '#2e7d32 !important',
-              color: 'white',
+              color: 'white'
+            },
+            '& .MuiDataGrid-cell': {
+              fontSize: '10',
+              align: 'center'
+            },
+            '& .MuiDataGrid-row': {
+              fontWeight: '600',
+              fontSize: '14px',
+              boxSizing: 'border-box',
             },
           }}
+          rows={salaryTemplates}
           columns={columns}
           getRowId={(row) => row._id}
           paginationMode="server"
@@ -412,17 +506,11 @@ const SalaryTemplate = () => {
           onPaginationModelChange={handlePaginationModelChange}
           pageSizeOptions={[10, 20, 30]}
           paginationModel={{ page: page - 1, pageSize: limit }}
-          checkboxSelection
           disableRowSelectionOnClick
         />
       </Box>
-      <ToastContainer />
-      <Dialog open={showForm} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogContent>
-          <AddSalaryTemplateForm id={selectedTemplate} handleClose={handleClose} />
-        </DialogContent>
-      </Dialog>
-    </Box>
+
+    </>
   );
 };
 

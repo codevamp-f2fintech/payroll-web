@@ -6,14 +6,15 @@ import employeesReducer from '@/redux/features/employees/employeesSlice';
 import salaryTemplateReducer from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import salaryComponentReducer from '@/redux/features/salaryComponent/salaryComponentSlice';
 import payrollReducer from '@/redux/features/payroll/payrollSlice'
-
+import declarationReducer from "@/redux/features/declaration/declarationSlice"
 const store = configureStore({
   reducer: {
     // Add your reducers here
     employees: employeesReducer,
     salaryTemplates: salaryTemplateReducer,
     salaryComponents: salaryComponentReducer,
-    payrolls: payrollReducer
+    payrolls: payrollReducer,
+    declaration: declarationReducer
   }
 })
 

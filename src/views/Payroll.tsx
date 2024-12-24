@@ -104,12 +104,13 @@ const PayrollGrid = () => {
         flex: 1,
         headerAlign: 'center',
         align: 'center',
+        headerClassName: 'super-app-theme--header',
         renderCell: (params) => {
           const name = params.row.salaryTemplate.name
           return (
-            <Typography>
+            <span>
               {name}
-            </Typography>
+            </span>
           )
         }
       },
@@ -145,9 +146,12 @@ const PayrollGrid = () => {
         field: 'edit',
         headerName: 'Edit',
         sortable: false,
-        width: 150,
+        flex: 1,
+        headerAlign: 'center',
+        headerClassName: 'super-app-theme--header',
+        align: 'center',
         renderCell: ({ row: { _id } }) => (
-          <Button color="info" variant="contained" onClick={() => handleEditClick(_id)}>
+          <Button sx={{ background: '#2e7d32' }} variant="contained" onClick={() => handleEditClick(_id)}>
             Edit
           </Button>
         ),
@@ -199,7 +203,6 @@ const PayrollGrid = () => {
         </Box>}
       </Box>
       <Grid container spacing={6} alignItems='center' mb={2}>
-
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -229,7 +232,7 @@ const PayrollGrid = () => {
           sx={{
             height: 600,
             '& .super-app-theme--header': {
-              fontSize: 17,
+              fontSize: 15,
               fontWeight: 600,
               alignItems: 'center'
             },

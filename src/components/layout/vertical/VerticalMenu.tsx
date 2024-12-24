@@ -104,6 +104,9 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
           <MenuItem href={`/payroll-generator`} icon={<CurrencyRupeeIcon />}>
             Payslip-Generator
           </MenuItem>
+          <MenuItem href={`/my-declaration`}>
+            My-Declaration
+          </MenuItem>
         </MenuSection>
       </Menu>
     </ScrollWrapper>
