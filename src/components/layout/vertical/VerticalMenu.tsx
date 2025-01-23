@@ -4,10 +4,16 @@ import { useEffect, useState } from 'react'
 import Chip from '@mui/material/Chip'
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useTheme } from '@mui/material/styles'
-
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 // Third-party Imports
+import DoneIcon from '@mui/icons-material/Done';
+import CreditScoreOutlinedIcon from '@mui/icons-material/CreditScoreOutlined';
+import FileCopyOutlinedIcon from '@mui/icons-material/FileCopyOutlined';
+import DriveFileRenameOutlineOutlinedIcon from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import PerfectScrollbar from 'react-perfect-scrollbar'
-
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 // Type Imports
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage'
 
@@ -92,21 +98,48 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
               Employees
             </MenuItem>
           }
-          <MenuItem href={`/payroll`} icon={<i className='fa-brands fa-paypal fa-2xs' />}>
-            Payroll
-          </MenuItem>
-          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<i className='fa fa-receipt fa-2xs' />}>
-            Salary Template
+          {/* {userRole === '1' && (
+            <MenuItem href={`/organization`} icon={<ApartmentIcon />}>
+              Organization profile
+            </MenuItem>
+          )} */}
+
+          {userRole === '1' && <MenuItem href={`/employees`} icon={<i className='ri-user-3-line' />}>
+            Employees
           </MenuItem>}
-          {userRole === '1' && <MenuItem href={`/salary-component`} icon={<i className='fa fa-edit fa-2xs' />}>
+          {userRole === '1' && <MenuItem href={`/salary-component`} icon={<DriveFileRenameOutlineOutlinedIcon />}>
             Salary Component
           </MenuItem>}
+          {userRole === '1' && <MenuItem href={`/statutory-components`} icon={<EditNoteOutlinedIcon />}>
+            Statutory Components
+          </MenuItem>}
+          {userRole === '1' && <MenuItem href={`/salary-template`} icon={<FileCopyOutlinedIcon />}>
+            Salary Template
+          </MenuItem>}
+          {userRole === '1' && <MenuItem href={`/payroll`} icon={<CreditScoreOutlinedIcon />}>
+            Payroll
+          </MenuItem>}
+
           <MenuItem href={`/payroll-generator`} icon={<CurrencyRupeeIcon />}>
             Payslip-Generator
           </MenuItem>
-          <MenuItem href={`/my-declaration`}>
-            My-Declaration
+          <MenuItem href={`/loan`} icon={< RequestQuoteIcon />}>
+            loan
           </MenuItem>
+          <MenuItem href={`/declaration`} icon={< DescriptionOutlinedIcon />}>
+            Declaration
+          </MenuItem>
+          <MenuItem href={`/fbp`}>
+            FBP plans
+          </MenuItem>
+          {/* Approvals Dropdown */}
+          {userRole === '1' && (
+            <SubMenu label="Approvals" icon={<DoneIcon />}>
+              <MenuItem href={`/approvals/reimbursements`}>Reimbursements</MenuItem>
+              <MenuItem href={`/approvals/proof-of-investments`}>Proof Of Investments</MenuItem>
+              <MenuItem href={`/approvals/salary-revision`}>Salary Revision</MenuItem>
+            </SubMenu>
+          )}
         </MenuSection>
       </Menu>
     </ScrollWrapper>

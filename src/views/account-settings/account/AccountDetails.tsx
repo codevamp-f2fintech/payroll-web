@@ -1,209 +1,453 @@
-'use client'
+'use client';
 
-// React Imports
-import { useState, useEffect } from 'react'
-import type { ChangeEvent } from 'react'
+import { useState, useEffect, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '../../../utils/cropUtils';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Snackbar,
+  Container,
+  Grid,
+  CircularProgress,
+  Divider,
+  IconButton,
+  debounce
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+// import { fetchConfiguration } from '@/utility/setting-configuration/settingConfig';
+import { fetchOrganizations } from '@/redux/features/organization/organizationSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+// Styled components
+const ImageContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: 300,
+  height: 300,
+  margin: '0 auto',
+  border: `2px dashed ${theme.palette.grey[300]}`,
+  borderRadius: theme.shape.borderRadius,
+  overflow: 'hidden',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: theme.palette.grey[50]
+}));
 
-// MUI Imports
-import Grid from '@mui/material/Grid'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
-import Chip from '@mui/material/Chip'
-import type { SelectChangeEvent } from '@mui/material/Select'
+const StyledImage = styled('img')({
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain'
+});
 
+const CropContainer = styled(Box)({
+  position: 'relative',
+  width: '100%',
+  height: '100%'
+});
 
 const AccountDetails = () => {
+  const dispatch = useDispatch();
 
-  const [fileInput, setFileInput] = useState<string>('')
-  const [userData, setUserData] = useState<any>(null);
+  const { organizations } = useSelector((state: RootState) => state.organization);
+  console.log('organization', organizations)
+  const [logo, setLogo] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [rotation, setRotation] = useState(0);
+  const [cropMode, setCropMode] = useState(false);
 
+  const [companyName, setCompanyName] = useState('');
+  const [aboutUs, setAboutUs] = useState('');
+  const [email, setEmail] = useState('');
+  const [contactNo, setContactNo] = useState('');
+  const [locations, setLocations] = useState<string[]>(['']); // Array for addresses
+  const [branches, setBranches] = useState<string[]>(['']); // Array for branches
+  const [companyId, setCompanyId] = useState('');
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [configId, setConfigId] = useState<string | null>(null);
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
+  const [openAlert, setOpenAlert] = useState(false);
+  const [organizationData, setOrganizationData] = useState(null);
+
+  const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
+
+  const API_URL = process.env.NEXT_PUBLIC_APP_URL;
+
+  const debouncedFetch = useCallback(
+    debounce(() => {
+      dispatch(fetchOrganizations());
+    }, 300),
+    []
+  );
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || '{}')
+    debouncedFetch();
+    return debouncedFetch.cancel;
+  }, [debouncedFetch]);
 
-    const fetchUserData = async () => {
+  useEffect(() => {
+    if (organizations && organizations.length > 0) {
+      setOrganizationData(organizations[0]); // Assuming we want to show the first organization
+    }
+  }, [organizations]);
+
+  const id = organizations.find(org => org._id)
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/employees/get/${user.id}`)
-        const data = await response.json()
+        // const result = await dispatch(fetchOrganizations()).unwrap();
+        // const currentOrg = result.find(org => org._id === id);
 
-        setUserData(data)
-
+        if (organizationData) {
+          setCompanyName(organizationData.name);
+          setAboutUs(organizationData.description);
+          setEmail(organizationData.email);
+          setContactNo(organizationData.contactNo);
+          setLocations(organizationData.address || ['']);
+          setBranches(organizationData.branch || ['']);
+          setLogo(organizationData.image);
+          setConfigId(organizationData._id);
+          setIsEditing(true);
+          setCompanyId(organizationData.company_id);
+        }
       } catch (error) {
-        console.error("Error fetching user data:", error)
+        console.error('Error fetching configuration:', error);
+        showAlert('Error loading configuration.', 'error');
+      } finally {
+        setDataLoaded(true);
       }
+    };
+
+    fetchData();
+  }, [dispatch, organizationData]);
+
+
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLogo(reader.result as string);
+        setCropMode(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = async () => {
+    if (logo && croppedAreaPixels) {
+      const croppedImage = await getCroppedImg(logo, croppedAreaPixels, rotation);
+      setLogo(croppedImage);
+      setCropMode(false);
+    }
+  };
+
+  const handleAddLocation = () => {
+    setLocations([...locations, '']);
+  };
+
+  const handleRemoveLocation = (index: number) => {
+    setLocations(locations.filter((_, i) => i !== index));
+  };
+
+  const handleLocationChange = (index: number, value: string) => {
+    const updatedLocations = [...locations];
+    updatedLocations[index] = value;
+    setLocations(updatedLocations);
+  };
+
+  const handleAddBranch = () => {
+    setBranches([...branches, '']);
+  };
+
+  const handleRemoveBranch = (index: number) => {
+    setBranches(branches.filter((_, i) => i !== index));
+  };
+
+  const handleBranchChange = (index: number, value: string) => {
+    const updatedBranches = [...branches];
+    updatedBranches[index] = value;
+    setBranches(updatedBranches);
+  };
+
+
+  const handleSubmit = async () => {
+    if (!companyName || !aboutUs || !email || !contactNo) {
+      showAlert('Please fill out all required fields!', 'error');
+      return;
     }
 
-    if (user.id) {
-      fetchUserData()
+    const formData = new FormData();
+    formData.append('name', companyName);
+    formData.append('description', aboutUs);
+    formData.append('email', email);
+    formData.append('contactNo', contactNo);
+    formData.append('address', JSON.stringify(locations)); // Send locations as JSON
+    const lowercaseBranches = branches.map(branch => branch.toLowerCase());
+    formData.append('branch', JSON.stringify(lowercaseBranches));
+    formData.append('company_id', company_id);
+
+    if (logo && !logo.startsWith('http')) {
+      const response = await fetch(logo);
+      const blob = await response.blob();
+      formData.append('file', blob, 'logo.png');
     }
-  }, [])
 
-  if (!userData) return null
-  console.log('account dada', userData)
+    try {
+      const method = isEditing && configId ? 'PUT' : 'POST';
+      const url = isEditing
+        ? `${API_URL}/organization-profile/update/${configId}`
+        : `${API_URL}/organization-profile/create`;
 
-  const handleFormChange = (field: keyof Data, value: Data[keyof Data]) => {
-    setUserData({ ...userData, [field]: value })
-  }
+      const configResponse = await fetch(url, {
+        method,
+        body: formData
+      });
 
-  const handleFileInputChange = (file: ChangeEvent) => {
-    const reader = new FileReader()
-    const { files } = file.target as HTMLInputElement
-
-    if (files && files.length !== 0) {
-      reader.onload = () => setImgSrc(reader.result as string)
-      reader.readAsDataURL(files[0])
-
-      if (reader.result !== null) {
-        setFileInput(reader.result as string)
-      }
+      if (!configResponse.ok) throw new Error('Failed to save configuration');
+      showAlert(isEditing ? 'Configuration updated successfully!' : 'Configuration created successfully!', 'success');
+    } catch (error) {
+      console.error('Error submitting configuration:', error);
+      showAlert('Failed to submit configuration!', 'error');
     }
-  }
+  };
 
-  const handleFileInputReset = () => {
-    setFileInput('')
-    setImgSrc('/images/avatars/1.png')
+  const showAlert = (message: string, severity: 'success' | 'error') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setOpenAlert(true);
+  };
+
+  if (!dataLoaded) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <Card>
-      <CardContent className='mbe-5'>
-        <div className='flex max-sm:flex-col items-center gap-6'>
-          <img height={100} width={100} className='rounded' src={userData.image} alt='Profile' />
-          <div className='flex flex-grow flex-col gap-4'>
-            <div className='flex flex-col sm:flex-row gap-4'>
-              <Button component='label' size='small' variant='contained' htmlFor='account-settings-upload-image'>
-                Upload New Photo
-                <input
-                  hidden
-                  type='file'
-                  value={fileInput}
-                  accept='image/png, image/jpeg'
-                  onChange={handleFileInputChange}
-                  id='account-settings-upload-image'
-                />
-              </Button>
-              <Button size='small' variant='outlined' color='error' onClick={handleFileInputReset}>
-                Reset
-              </Button>
-            </div>
-            <Typography>Allowed JPG, GIF or PNG. Max size of 800K</Typography>
-          </div>
-        </div>
-      </CardContent>
-      <CardContent>
-        <form onSubmit={e => e.preventDefault()}>
-          <Grid container spacing={5}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='First Name'
-                value={userData.first_name}
-                onChange={e => handleFormChange('firstName', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Last Name'
-                value={userData.last_name}
-                onChange={e => handleFormChange('lastName', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Email'
-                value={userData.email}
-                placeholder='john.doe@gmail.com'
-                onChange={e => handleFormChange('email', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Designation'
-                value={userData.designation}
-                onChange={e => handleFormChange('designation', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Phone Number'
-                value={userData.contact}
-                placeholder='+1 (234) 567-8901'
-                onChange={e => handleFormChange('phoneNumber', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='DOB'
-                value={userData.dob}
-                onChange={e => handleFormChange('dob', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Gender'
-                value={userData.gender}
-                onChange={e => handleFormChange('gender', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Role-priority'
-                value={userData.role_priority}
-                onChange={e => handleFormChange('role_priority', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Status'
-                value={userData.status}
-                onChange={e => handleFormChange('status', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Joining_date'
-                value={userData.joining_date}
-                onChange={e => handleFormChange('joining_date', e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Leaving_date'
-                value={userData.leaving_date}
-                onChange={e => handleFormChange('leaving_date', e.target.value)}
-              />
-            </Grid>
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+        <Typography variant="h4" gutterBottom color="primary">
+          {isEditing ? 'Update Configuration' : 'Create Configuration'}
+        </Typography>
+        <Divider sx={{ mb: 4 }} />
 
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button variant='contained' type='submit'>
-                Save Changes
-              </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={() => setFormData(initialData)}>
-                Reset
-              </Button>
-            </Grid>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <ImageContainer>
+              {cropMode && logo ? (
+                <CropContainer>
+                  <Cropper
+                    image={logo}
+                    crop={crop}
+                    zoom={zoom}
+                    rotation={rotation}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onRotationChange={setRotation}
+                    onCropComplete={(_, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+                  />
+                </CropContainer>
+              ) : (
+                <StyledImage src={logo || '/images/default-logo.png'} alt="Logo" />
+              )}
+            </ImageContainer>
+
+            <Box display="flex" justifyContent="center" gap={2} mt={2}>
+              {cropMode ? (
+                <>
+                  <Button
+                    variant="contained"
+                    startIcon={<SaveIcon />}
+                    onClick={handleCropComplete}
+                    color="primary"
+                  >
+                    Save Crop
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CancelIcon />}
+                    onClick={() => setCropMode(false)}
+                    color="error"
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  component="label"
+                  variant="contained"
+                  startIcon={<PhotoCamera />}
+                  sx={{ mt: 2 }}
+                >
+                  Upload Logo
+                  <input hidden type="file" accept="image/*" onChange={handleFileInputChange} />
+                </Button>
+              )}
+            </Box>
           </Grid>
-        </form>
-      </CardContent>
-    </Card>
-  )
-}
 
-export default AccountDetails
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Company Name"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              margin="normal"
+              variant="outlined"
+              required
+            />
+
+            <TextField
+              fullWidth
+              label="Company Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              margin="normal"
+              variant="outlined"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Company Contact No."
+              value={contactNo}
+              onChange={(e) => setContactNo(e.target.value)}
+              margin="normal"
+              variant="outlined"
+              required
+            />
+
+            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+              Branches
+            </Typography>
+            {branches.map((branch, index) => (
+              <Box key={index} display="flex" alignItems="center" gap={2} sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label={`Branch ${index + 1}`}
+                  value={branch}
+                  onChange={(e) => handleBranchChange(index, e.target.value)}
+                  variant="outlined"
+                />
+                {branches.length > 1 && (
+                  <IconButton
+                    color="error"
+                    onClick={() => handleRemoveBranch(index)}
+                    sx={{ p: 1 }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddBranch}
+            >
+              Add Branch
+            </Button>
+
+
+            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+              Locations (Addresses)
+            </Typography>
+            {locations.map((location, index) => (
+              <Box key={index} display="flex" alignItems="center" gap={2} sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label={`Location ${index + 1}`}
+                  value={location}
+                  onChange={(e) => handleLocationChange(index, e.target.value)}
+                  variant="outlined"
+                />
+                {locations.length > 1 && (
+                  <IconButton
+                    color="error"
+                    onClick={() => handleRemoveLocation(index)}
+                    sx={{ p: 1 }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddLocation}
+            >
+              Add Location
+            </Button>
+
+            <TextField
+              fullWidth
+              label="About Us"
+              value={aboutUs}
+              onChange={(e) => setAboutUs(e.target.value)}
+              margin="normal"
+              multiline
+              rows={4}
+              variant="outlined"
+              required
+            />
+
+            <Box sx={{ mt: 4 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                startIcon={<SaveIcon />}
+                sx={{ mr: 2 }}
+              >
+                {isEditing ? 'Update' : 'Create'} Configuration
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setIsEditing(false)}
+                startIcon={<CancelIcon />}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Snackbar
+        open={openAlert}
+        autoHideDuration={6000}
+        onClose={() => setOpenAlert(false)}
+      >
+        <Alert onClose={() => setOpenAlert(false)} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
+    </Container>
+  );
+};
+
+export default AccountDetails;
+
+

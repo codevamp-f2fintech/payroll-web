@@ -11,15 +11,13 @@ import {
   Alert,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import { Upload } from "@mui/icons-material";
 
-const HraForm = ({ handleClose, rowData, formId }) => {
-  const [preview, setPreview] = useState(null);
+const StatutoryBonusform = ({ handleClose, rowData, debouncedFetch, formId }) => {
+
   const [formData, setFormData] = useState({
-    houseRent: "",
-    landlordName: "",
-    landlordAddress: "",
-    proof: null,
+    paymentFrequency: "yearly",
+    bonusPercentage: "",
+    paymentMonth: "",
   });
 
   const [toastOpen, setToastOpen] = useState(false);
@@ -27,16 +25,12 @@ const HraForm = ({ handleClose, rowData, formId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (rowData && rowData.hra) {
+    if (rowData && rowData.Bonus) {
       setFormData({
-        houseRent: rowData.hra.houseRent || "",
-        landlordName: rowData.hra.landlordName || "",
-        landlordAddress: rowData.hra.landlordAddress || "",
-        proof: null,
+        paymentFrequency: rowData.Bonus.paymentFrequency || "",
+        bonusPercentage: rowData.Bonus.bonusPercentage || "",
+        paymentMonth: rowData.Bonus.paymentMonth || "",
       });
-      if (rowData.hra.proof) {
-        setPreview(rowData.hra.proof);
-      }
     }
   }, [rowData]);
 
@@ -45,45 +39,20 @@ const HraForm = ({ handleClose, rowData, formId }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, proof: file }));
-
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreview(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPreview(null);
-      }
-    }
-  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
 
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/update/${formId}`;
-    const formDataToSend = new FormData();
-
-    const hraData = {
-      houseRent: formData.houseRent,
-      landlordName: formData.landlordName,
-      landlordAddress: formData.landlordAddress,
-    };
-    formDataToSend.append("hra", JSON.stringify(hraData));
-
-    if (formData.proof instanceof File) {
-      formDataToSend.append("proof", formData.proof);
-    }
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/statutory-components/update/${formId}`;
 
     try {
       const response = await fetch(url, {
         method: 'PUT',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ Bonus: formData }),
       });
 
       if (!response.ok) {
@@ -97,6 +66,7 @@ const HraForm = ({ handleClose, rowData, formId }) => {
         // Delay closing the form
         setTimeout(() => {
           handleClose();
+          debouncedFetch();
         }, 1000);
       }
     } catch (error) {
@@ -107,6 +77,7 @@ const HraForm = ({ handleClose, rowData, formId }) => {
       setIsSubmitting(false);
     }
   };
+
 
   const handleToastClose = (event, reason) => {
     if (reason === 'clickaway') {
@@ -119,7 +90,7 @@ const HraForm = ({ handleClose, rowData, formId }) => {
     <Box p={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">
-          {rowData ? "Edit House Rent Allowance" : "House Rent Allowance"}
+          {rowData ? "Edit Statutory Bonus " : "Statutory Bonus"}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
@@ -130,9 +101,9 @@ const HraForm = ({ handleClose, rowData, formId }) => {
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Rent of House"
-            name="houseRent"
-            value={formData.houseRent}
+            label="payment Frequency"
+            name="paymentFrequency"
+            value={formData.paymentFrequency}
             onChange={handleChange}
           />
         </Grid>
@@ -140,9 +111,9 @@ const HraForm = ({ handleClose, rowData, formId }) => {
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Name of Landlord"
-            name="landlordName"
-            value={formData.landlordName}
+            label="Bonus percentage"
+            name="bonusPercentage"
+            value={formData.bonusPercentage}
             onChange={handleChange}
           />
         </Grid>
@@ -150,47 +121,17 @@ const HraForm = ({ handleClose, rowData, formId }) => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Address"
-            name="landlordAddress"
-            value={formData.landlordAddress}
+            label="Payment Month"
+            name="paymentMonth"
+            value={formData.paymentMonth}
             onChange={handleChange}
-            multiline
-            rows={3}
           />
         </Grid>
 
-        <Grid item xs={12}>
-          <TextField
-
-            type="file"
-            InputLabelProps={{ shrink: true }}
-            onChange={handleFileChange}
-            startIcon={<Upload />}
-
-            inputProps={{
-              accept: '.pdf,.jpg,.jpeg,.png',
-            }}
-          />
-          {formData.proof && (
-            <Typography variant="caption" color="textSecondary">
-              Selected file: {formData.proof.name}
-            </Typography>
-          )}
-          {preview && (
-            <div style={{ marginTop: '10px' }}>
-              <img
-                src={preview}
-                alt="Preview"
-                style={{ maxWidth: '100%', maxHeight: '200px' }}
-              />
-            </div>
-          )}
-        </Grid>
 
         <Grid item xs={12}>
           <Button
             fullWidth
-            type="submit"
             variant="contained"
             color="primary"
             onClick={handleSubmit}
@@ -212,11 +153,11 @@ const HraForm = ({ handleClose, rowData, formId }) => {
           severity={error ? "error" : "success"}
           sx={{ width: '100%' }}
         >
-          {error ? `Error: ${error}` : "HRA information saved successfully!"}
+          {error ? `Error: ${error}` : "StatutoryBonusform information saved successfully!"}
         </Alert>
       </Snackbar>
     </Box>
   );
 };
 
-export default HraForm;
+export default StatutoryBonusform;

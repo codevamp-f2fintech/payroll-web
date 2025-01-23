@@ -8,17 +8,24 @@ import {
   Typography,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  FormControlLabel,
+  Checkbox,
+  RadioGroup,
+  Radio
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { utility } from "@/utility";
 
-const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration = [] }) => {
+const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration = [] }) => {
   const { setLocalStorage } = utility();
   const [formData, setFormData] = useState({
-    previousSalary: "",
-    pf: "",
-    totalTax: "",
+    EPFNumber: "",
+    DeductionCycle: "Monthly",
+    EmployeeRate: "",
+    EmployerRate: "",
+    IncludedInCTC: false,
+    isPFWageLessThan15K: "",
   });
   const [employeeId, setEmployeeId] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
@@ -31,18 +38,25 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
   }, []);
 
   useEffect(() => {
-    if (rowData && rowData.basicInfo) {
+    if (rowData && rowData.EPF) {
       setFormData({
-        previousSalary: rowData.basicInfo.previousSalary || "",
-        pf: rowData.basicInfo.pf || "",
-        totalTax: rowData.basicInfo.totalTax || "",
+        EPFNumber: rowData.EPF.EPFNumber || "",
+        DeductionCycle: rowData.EPF.DeductionCycle || "",
+        EmployeeRate: rowData.EPF.EmployeeRate || "",
+        EmployerRate: rowData.EPF.EmployerRate || "",
+        IncludedInCTC: rowData.EPF.IncludedInCTC || false,
+        isPFWageLessThan15K: rowData.EPF.isPFWageLessThan15K || "",
+
       });
     }
   }, [rowData]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async () => {
@@ -52,11 +66,11 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
     try {
       const method = declaration ? "PUT" : "POST";
       const url = declaration
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/update/${declaration}`
-        : `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/create`;
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/statutory-components/update/${declaration}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/statutory-components/create`;
 
       const payload = {
-        basicInfo: formData,
+        EPF: formData,
         employeeId,
       };
 
@@ -108,7 +122,7 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
     <Box p={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">
-          {rowData ? "Edit Previous Employment tax Details" : "Previous Employment tax Details"}
+          {rowData ? "Edit Employees' Provident Fund  " : "Employees' Provident Fund "}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
@@ -121,9 +135,9 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Previous Salary"
-            name="previousSalary"
-            value={formData.previousSalary}
+            label="EPF Number"
+            name="EPFNumber"
+            value={formData.EPFNumber}
             onChange={handleChange}
           />
         </Grid>
@@ -132,9 +146,9 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
           <TextField
             fullWidth
             required
-            label="Total tax"
-            name="totalTax"
-            value={formData.totalTax}
+            label="Deduction Cycle"
+            name="DeductionCycle"
+            value={formData.DeductionCycle}
             onChange={handleChange}
           />
         </Grid>
@@ -142,11 +156,50 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="pf"
-            name="pf"
-            value={formData.pf}
+            required
+            label="Employee Contribution Rate"
+            name="EmployeeRate"
+            value={formData.EmployeeRate}
             onChange={handleChange}
           />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            required
+            label="Employer Contribution Rate"
+            name="EmployerRate"
+            value={formData.EmployerRate}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="IncludedInCTC"
+                checked={formData.IncludedInCTC}
+                onChange={handleChange}
+              />
+            }
+            label="Employer's contribution is included in the CTC"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Typography variant="body1" gutterBottom>
+            When PF wage is less than ₹15,000:
+          </Typography>
+          <RadioGroup
+            row
+            name="isPFWageLessThan15K"
+            value={formData.isPFWageLessThan15K}
+            onChange={handleChange}
+          >
+            <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="No" control={<Radio />} label="No" />
+          </RadioGroup>
         </Grid>
 
         <Grid item xs={12}>
@@ -180,4 +233,4 @@ const BasicInfoForm = ({ handleClose, setformId, rowData, debouncedFetch, declar
   );
 };
 
-export default BasicInfoForm;
+export default EPFForm;

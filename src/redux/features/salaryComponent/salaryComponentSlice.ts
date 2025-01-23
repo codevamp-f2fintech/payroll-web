@@ -5,6 +5,7 @@ export interface SalaryComponent {
   _id: string;
   salarytype: string;
   type: string;
+  calculationtype: string,
   amount: number;
   description: string;
   createdBy: string;

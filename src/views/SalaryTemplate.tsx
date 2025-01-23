@@ -15,13 +15,16 @@ import {
   Autocomplete,
   DialogContent,
   InputAdornment,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
-
+import AddSalaryTemplateForm from '@/components/salary-template/SalaryTemplateForm'
 import type { AppDispatch, RootState } from '@/redux/store';
 import { fetchSalaryTemplates } from '@/redux/features/salaryTemplate/salaryTemplateSlice';
 import { fetchSalaryComponents } from '@/redux/features/salaryComponent/salaryComponentSlice';
@@ -70,257 +73,6 @@ const SalaryTemplate = () => {
     debouncedFetch();
   };
 
-  const AddSalaryTemplateForm = ({ id, handleClose }: { id: string | null; handleClose: () => void }) => {
-    const [formData, setFormData] = useState({
-      name: '',
-      components: [],
-      baseSalary: 0,
-      earningTypes: [] as string[],
-      deductionTypes: [] as string[],
-      description: '',
-    });
-
-    const [netSalary, setNetSalary] = useState(0);
-
-    const [errors, setErrors] = useState({
-      name: '',
-      baseSalary: '',
-      earningTypes: '',
-      deductionTypes: '',
-      description: '',
-    });
-
-    useEffect(() => {
-      if (id) {
-        const selected = salaryTemplates.find(temp => temp._id === id);
-        if (selected) {
-          setFormData({
-            name: selected.name,
-            baseSalary: selected.baseSalary,
-            earningTypes: selected.earningTypes,
-            deductionTypes: selected.deductionTypes,
-            description: selected.description,
-          });
-          updateNetSalary(selected.baseSalary, selected.earningTypes, selected.deductionTypes);
-        }
-      }
-    }, [id, salaryTemplates]);
-
-    const validateForm = () => {
-      let isValid = true;
-      const newErrors = { name: '', baseSalary: '', earningTypes: '', deductionTypes: '', description: '' };
-
-      if (!formData.name.trim()) {
-        newErrors.name = 'Name is required';
-        isValid = false;
-      }
-      if (!formData.baseSalary) {
-        newErrors.baseSalary = 'Base salary is required';
-        isValid = false;
-      }
-      if (!formData.earningTypes.length) {
-        newErrors.earningTypes = 'At least one earning type is required';
-        isValid = false;
-      }
-      if (!formData.deductionTypes.length) {
-        newErrors.deductionTypes = 'At least one deduction type is required';
-        isValid = false;
-      }
-
-      setErrors(newErrors);
-      return isValid;
-    };
-
-    const updateNetSalary = (fixedBaseSalary: number, earningIds: string[], deductionIds: string[]) => {
-      // Calculate total earnings
-      const earningsTotal = salaryComponents
-        .filter(comp => earningIds.includes(comp._id))
-        .reduce((sum, comp) => sum + comp.amount, 0);
-
-      // Calculate total deductions
-      const deductionsTotal = salaryComponents
-        .filter(comp => deductionIds.includes(comp._id))
-        .reduce((sum, comp) => sum + comp.amount, 0);
-
-      // Calculate net salary
-      const calculatedNetSalary = fixedBaseSalary + earningsTotal - deductionsTotal;
-      setNetSalary(calculatedNetSalary);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-
-      if (name === 'baseSalary') {
-        const fixedBaseSalary = parseFloat(value) || 0;
-        setFormData(prevState => ({
-          ...prevState,
-          baseSalary: fixedBaseSalary,
-        }));
-        updateNetSalary(fixedBaseSalary, formData.earningTypes, formData.deductionTypes);
-      } else {
-        setFormData(prevState => ({ ...prevState, [name]: value }));
-      }
-    };
-
-    const handleEarningTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map(item => item._id);
-      setFormData(prev => ({ ...prev, earningTypes: newIds }));
-      updateNetSalary(formData.baseSalary, newIds, formData.deductionTypes);
-    };
-
-    const handleDeductionTypesChange = (event: any, newValue: any[]) => {
-      const newIds = newValue.map(item => item._id);
-      setFormData(prev => ({ ...prev, deductionTypes: newIds }));
-      updateNetSalary(formData.baseSalary, formData.earningTypes, newIds);
-    };
-
-    const handleSubmit = () => {
-      if (validateForm()) {
-        const method = id ? 'PUT' : 'POST';
-        const url = id
-          ? `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/update/${id}`
-          : `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/create`;
-
-        fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, netSalary }),
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data) {
-              handleClose();
-              debouncedFetch();
-              toast.success(id ? "Salary Template Successfully Updated" : "Salary Template Successfully Created");
-            } else {
-              toast.error('Unexpected error occurred');
-            }
-          })
-          .catch(error => {
-            toast.error('Error: ' + error.message);
-          });
-      }
-    };
-
-    return (
-      <Box sx={{ flexGrow: 1, padding: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography style={{ fontSize: '2em' }} variant="h5" gutterBottom>
-            {id ? 'Edit Salary Template' : 'Add Salary Template'}
-          </Typography>
-          <IconButton onClick={handleClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Template Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              error={!!errors.name}
-              helperText={errors.name}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Base Salary"
-              name="baseSalary"
-              type="number"
-              value={formData.baseSalary === 0 ? '' : formData.baseSalary} // If it's 0, show an empty string
-              onChange={handleChange}
-              required
-              error={!!errors.baseSalary}
-              helperText={errors.baseSalary}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth required>
-              <Autocomplete
-                id="Select Earnings"
-                multiple
-                options={salaryComponents.filter(component => component.salarytype === 'Earnings')}
-                getOptionLabel={(option) => `${option.type} - ${option.amount}`}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {option.type} - {option.amount}
-                  </li>
-                )}
-                renderInput={(params) => <TextField {...params} label="Select Earnings" variant="outlined" />}
-                value={salaryComponents.filter((comp) => formData.earningTypes.includes(comp._id))}
-                onChange={handleEarningTypesChange}
-                isOptionEqualToValue={(option, value) => option._id === value._id}
-              />
-              {errors.earningTypes && (
-                <Typography color="error">{errors.earningTypes}</Typography>
-              )}
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth required>
-              <Autocomplete
-                id="Select Deductions"
-                multiple
-                options={salaryComponents.filter(component => component.salarytype === 'Deductions')}
-                getOptionLabel={(option) => `${option.type} - ${option.amount}`}
-                renderOption={(props, option) => (
-                  <li {...props}>
-                    {option.type} - {option.amount}
-                  </li>
-                )}
-                renderInput={(params) => <TextField {...params} label="Select Deductions" variant="outlined" />}
-                value={salaryComponents.filter((comp) => formData.deductionTypes.includes(comp._id))}
-                onChange={handleDeductionTypesChange}
-                isOptionEqualToValue={(option, value) => option._id === value._id}
-              />
-              {errors.deductionTypes && (
-                <Typography color="error">{errors.deductionTypes}</Typography>
-              )}
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Net Salary"
-              name="netSalary"
-              type="number"
-              value={netSalary}
-              InputProps={{
-                readOnly: true,
-                startAdornment: <Typography sx={{ marginRight: 1 }}>₹</Typography>,
-
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              error={!!errors.description}
-              helperText={errors.description}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              fullWidth
-              style={{ backgroundColor: '#ff902f' }}
-              onClick={handleSubmit}
-            >
-              {id ? 'Edit Template' : 'Add Template'}
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-    );
-  };
 
   const handleTemplateAddClick = () => {
     setSelectedTemplate(null);
@@ -427,7 +179,13 @@ const SalaryTemplate = () => {
       <ToastContainer position='top-center' />
       <Dialog open={showForm} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogContent>
-          <AddSalaryTemplateForm id={selectedTemplate} handleClose={handleClose} />
+          <AddSalaryTemplateForm
+            id={selectedTemplate}
+            handleClose={handleClose}
+            debouncedFetch={debouncedFetch}
+
+
+          />
         </DialogContent>
       </Dialog>
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>

@@ -1,16 +1,30 @@
 "use client"
-import { Box, Button, Dialog, DialogContent, Grid, InputAdornment, TextField, Typography } from "@mui/material"
+import { Box, Button, Dialog, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material"
 import SearchIcon from '@mui/icons-material/Search'
 import { SetStateAction, useCallback, useEffect, useMemo, useState } from "react"
 import { DataGrid } from "@mui/x-data-grid"
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { fetchDeclarations } from "@/redux/features/declaration/declarationSlice"
+import DeclarationView from '@/components/declaration/DeclarationView';
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
 import { debounce } from "lodash"
 import DeclarationForm from "@/components/declaration/declarationForm"
+import { styled } from '@mui/material/styles';
+import AddIcon from '@mui/icons-material/Add';
 
+import CloseIcon from '@mui/icons-material/Close';
+
+
+const BootstrapDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+}));
 interface Declaration {
   _id: string;
   basicInfo?: {
@@ -36,7 +50,7 @@ const Declarationgrid = () => {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
 
-  console.log('declaration', declarations)
+  console.log('declaration', declarations);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userRole = user?.role
@@ -98,46 +112,130 @@ const Declarationgrid = () => {
     setShowForm(true)
   }
 
+  const handleEditClick = (id: string) => {
+    setSelecteddeclarations(id);
+    setShowForm(true);
+  };
+
   const handleCloseForm = () => {
     setShowForm(false)
   }
 
   const generateColumns = useMemo(() => {
     return [
-      {
-        field: 'employeeId',
-        headerName: 'Employee Name',
-        flex: 1,
-        headerAlign: 'center',
-        align: 'center',
-        headerClassName: 'super-app-theme--header',
-      },
-      {
-        field: 'financialYear',
-        headerName: 'Financial Year',
-        flex: 1,
-        headerAlign: 'center',
-        align: 'center',
-        headerClassName: 'super-app-theme--header',
-      },
-      {
-        field: 'proof',
-        headerName: 'Proof',
-        flex: 1,
-        headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
-        align: 'center',
-      },
-      {
-        field: 'declaration',
-        headerName: 'Declaration',
-        flex: 1,
-        headerAlign: 'center',
-        headerClassName: 'super-app-theme--header',
-        align: 'center',
-      },
+      ...(userRole === '1' ?
+        [
+          {
+            field: 'employeeId',
+            headerName: 'Employee Name',
+            flex: 1,
+            headerAlign: 'center',
+            align: 'center',
+            headerClassName: 'super-app-theme--header',
+          },
+          {
+            field: 'financialYear',
+            headerName: 'Financial Year',
+            flex: 1,
+            headerAlign: 'center',
+            align: 'center',
+            headerClassName: 'super-app-theme--header',
+          },
+          {
+            field: 'proof',
+            headerName: 'Proof',
+            flex: 1,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            align: 'center',
+          },
+          {
+            field: 'view',
+            headerName: 'View Declaration',
+            flex: 1,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            align: 'center',
+            renderCell: (params) => {
+              const [open, setOpen] = useState(false);
+
+              const rowData = declarations.find((declaration) => declaration?._id === params.row.id);
+
+              const handleClickOpen = () => {
+                setOpen(true);
+                debouncedFetch();
+
+              };
+
+              const handleClose = () => {
+                setOpen(false);
+              };
+
+              return (
+                <>
+                  <Button variant="outlined" onClick={handleClickOpen}>
+                    View
+                  </Button>
+                  <DeclarationView
+                    open={open}
+                    onClose={handleClose}
+                    data={rowData}
+
+
+                  />
+                </>
+              );
+            }
+          },
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 1,
+            headerAlign: 'center',
+            align: 'center',
+            headerClassName: 'super-app-theme--header',
+            renderCell: (params) => {
+              return (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleEditClick(params.row.id)}
+                >
+                  Edit
+                </Button>
+              );
+            }
+          }
+        ] : [
+          {
+            field: 'employeeId',
+            headerName: 'Employee Name',
+            flex: 1,
+            headerAlign: 'center',
+            align: 'center',
+            headerClassName: 'super-app-theme--header',
+          },
+          {
+            field: 'financialYear',
+            headerName: 'Financial Year',
+            flex: 1,
+            headerAlign: 'center',
+            align: 'center',
+            headerClassName: 'super-app-theme--header',
+          },
+          {
+            field: 'proof',
+            headerName: 'Proof',
+            flex: 1,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            align: 'center',
+          },
+
+
+        ])
     ]
-  }, [])
+  }, [userRole, declarations,])
 
   // Add error boundary for data rendering
   if (!Array.isArray(declarations)) {
@@ -149,17 +247,23 @@ const Declarationgrid = () => {
       <ToastContainer position="top-center" />
       <Dialog open={showForm} onClose={handleCloseForm} fullWidth maxWidth='md'>
         <DialogContent>
-          <DeclarationForm handleClose={handleCloseForm} />
+          <DeclarationForm
+            handleClose={handleCloseForm}
+            declaration={selecteddeclarations}
+            declarations={declarations}
+            debouncedFetch={debouncedFetch}
+
+          />
         </DialogContent>
       </Dialog>
 
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
         <Box>
           <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
-            My Declaration
+            Declaration
           </Typography>
           <Typography style={{ fontSize: '1em', fontWeight: 'bold' }} variant='subtitle1' gutterBottom>
-            Dashboard / My Declaration
+            Dashboard / Declaration
           </Typography>
         </Box>
         <Box display='flex' alignItems='center'>
@@ -167,9 +271,10 @@ const Declarationgrid = () => {
             style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
             variant='contained'
             color='warning'
+            startIcon={<AddIcon />}
             onClick={handleAddClick}
           >
-            My Declaration
+            Add Declaration
           </Button>
         </Box>
 

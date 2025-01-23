@@ -17,26 +17,22 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { Add, Delete } from '@mui/icons-material';
 
-const Deductionunder = ({ handleClose, formId, rowData }) => {
+const Section80D = ({ handleClose, formId, rowData }) => {
   const [preview, setPreview] = useState(null);
   const [formData, setFormData] = useState([
-    { sectionname: "Section 80C", name: '', amount: '', proof: '', preview: null },
+    { sectionname: " section 80D", name: '', amount: '', proof: '', preview: null },
   ]);
 
-  const section80C = [
-    'Public Provident Fund (PPF)',
-    'Employee Provident Fund (EPF)',
-    " Life Insurance Premiums",
-    ' National Savings Certificates (NSC)',
-    ' Equity-Linked Savings Schemes (ELSS)',
-    ' Principal repayment of a home loan',
-    'Tuition fees for children',
-    'Equity-Linked Savings Schemes (ELSS):',
-    'Sukanya Samriddhi Yojana (SSY)',
-    'Senior Citizens Savings Scheme (SCSS)',
-    'Unit-Linked Insurance Plans (ULIPs)',
-    'Infrastructure Bonds',
-    "Tax-saving Fixed Deposits"
+  const section80D = [
+    "Health Insurance Premiums",
+    " Preventive Health Check-ups",
+    "Medical Expenditure for Senior Citizens(self) ",
+    "Medical Expenditure for Senior Citizens (parent)  ",
+    "Electric    ",
+
+
+    "Contribution to Central Government Health Scheme (CGHS)",
+
   ];
 
   const [toastOpen, setToastOpen] = useState(false);
@@ -59,7 +55,7 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
       );
       if (Array.isArray(rowData.deductions)) {
         const existingPreviews = rowData.deductions.map(d => d.proof || null);
-        setPreview(existingPreviews);
+        setPreviews(existingPreviews);
       }
     }
   }, [rowData]);
@@ -166,7 +162,7 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
     <Box p={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">
-          {rowData ? "Edit Deduction under Section 80C " : " Deduction under Section 80C "}
+          {rowData ? "Edi Deduction under Section80D" : " Deduction under Section80D"}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
@@ -195,10 +191,11 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
                     value={data.sectionname}
                     onChange={(e) => handleFormChange(index, 'sectionname', e.target.value)}
                   >
-                    <MenuItem value="Section 80C">Section 80C</MenuItem>
+                    <MenuItem value="Section  80D">Section  80D</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
+
               <Grid item xs={12}>
                 <FormControl fullWidth required>
                   <InputLabel>Investment Type Name</InputLabel>
@@ -206,7 +203,7 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
                     value={data.name}
                     onChange={(e) => handleFormChange(index, 'name', e.target.value)}
                   >
-                    {section80C.map((item, idx) => (
+                    {section80D.map((item, idx) => (
                       <MenuItem key={idx} value={item}>
                         {item}
                       </MenuItem>
@@ -214,6 +211,7 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
                   </Select>
                 </FormControl>
               </Grid>
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -284,4 +282,4 @@ const Deductionunder = ({ handleClose, formId, rowData }) => {
   );
 };
 
-export default Deductionunder;
+export default Section80D;

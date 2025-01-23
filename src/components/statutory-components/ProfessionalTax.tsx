@@ -1,32 +1,40 @@
 'use client';
-import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, IconButton, TextField, Typography, Snackbar, Alert } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Grid,
+  TextField,
+  Button,
+  Typography,
+  IconButton,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 
-const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
+const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
   const [preview, setPreview] = useState(null);
   const [formData, setFormData] = useState({
-    interestPayable: "",
-    lenderName: "",
-    lenderAddress: "",
-    lenderPan: "",
+    houseRent: "",
+    landlordName: "",
+    landlordAddress: "",
     proof: null,
   });
+
   const [toastOpen, setToastOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (rowData && rowData.deductions) {
+    if (rowData && rowData.hra) {
       setFormData({
-        interestPayable: rowData.deductions.interestPayable || "",
-        lenderName: rowData.deductions.lenderName || "",
-        lenderAddress: rowData.deductions.lenderAddress || "",
-        lenderPan: rowData.deductions.lenderPan || "",
-        proof: rowData.deductions.proof || null,
+        houseRent: rowData.hra.houseRent || "",
+        landlordName: rowData.hra.landlordName || "",
+        landlordAddress: rowData.hra.landlordAddress || "",
+        proof: null,
       });
-      if (rowData.deductions.proof) {
-        setPreview(rowData.deductions.proof);
+      if (rowData.hra.proof) {
+        setPreview(rowData.hra.proof);
       }
     }
   }, [rowData]);
@@ -60,16 +68,15 @@ const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/update/${formId}`;
     const formDataToSend = new FormData();
 
-    const deductionsData = {
-      interestPayable: formData.interestPayable,
-      lenderName: formData.lenderName,
-      lenderAddress: formData.lenderAddress,
-      lenderPan: formData.lenderPan,
+    const hraData = {
+      houseRent: formData.houseRent,
+      landlordName: formData.landlordName,
+      landlordAddress: formData.landlordAddress,
     };
-    formDataToSend.append('deductions', JSON.stringify(deductionsData));
+    formDataToSend.append("hra", JSON.stringify(hraData));
 
-    if (formData.proof) {
-      formDataToSend.append('file', formData.proof);
+    if (formData.proof instanceof File) {
+      formDataToSend.append("proof", formData.proof);
     }
 
     try {
@@ -80,20 +87,19 @@ const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save deductions data');
+        throw new Error(errorData.message || 'Failed to save HRA data');
       }
 
       const data = await response.json();
       if (data) {
         setToastOpen(true);
+        // Delay closing the form
         setTimeout(() => {
           handleClose();
-          debouncedFetch();
-
         }, 1000);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
       setError(error.message);
       setToastOpen(true);
     } finally {
@@ -112,57 +118,43 @@ const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
     <Box p={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">
-          {rowData ? "Edit Deduction of Interest on Borrowing" : "Deduction of Interest on Borrowing"}
+          {rowData ? "Edit Professinal Tax" : "Professinal Tax"}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
       </Box>
 
-      <Grid container spacing={3}>
+      {/* <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Interest Payable"
-            name="interestPayable"
-            value={formData.interestPayable}
+            label="Rent of House"
+            name="houseRent"
+            value={formData.houseRent}
             onChange={handleChange}
-            placeholder="Enter interest amount"
           />
         </Grid>
 
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Lender's Name"
-            name="lenderName"
-            value={formData.lenderName}
+            label="Name of Landlord"
+            name="landlordName"
+            value={formData.landlordName}
             onChange={handleChange}
-            placeholder="Enter lender's name"
           />
         </Grid>
 
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Lender's Address"
-            name="lenderAddress"
-            value={formData.lenderAddress}
+            label="Address"
+            name="landlordAddress"
+            value={formData.landlordAddress}
             onChange={handleChange}
             multiline
             rows={3}
-            placeholder="Enter lender's address"
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Lender's PAN (Optional)"
-            name="lenderPan"
-            value={formData.lenderPan}
-            onChange={handleChange}
-            placeholder="ABCDE1234F"
           />
         </Grid>
 
@@ -203,7 +195,7 @@ const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
             {isSubmitting ? "Saving..." : (rowData ? "Update" : "Save")}
           </Button>
         </Grid>
-      </Grid>
+      </Grid> */}
 
       <Snackbar
         open={toastOpen}
@@ -216,11 +208,11 @@ const Deductions = ({ handleClose, formId, debouncedFetch, rowData }) => {
           severity={error ? "error" : "success"}
           sx={{ width: '100%' }}
         >
-          {error ? `Error: ${error}` : "Deduction information saved successfully!"}
+          {error ? `Error: ${error}` : "HRA information saved successfully!"}
         </Alert>
       </Snackbar>
     </Box>
   );
 };
 
-export default Deductions;
+export default ProfessionalTaxForm;

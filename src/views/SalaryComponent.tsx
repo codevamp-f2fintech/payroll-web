@@ -12,7 +12,9 @@ import {
   DialogContent,
   DialogTitle,
   DialogActions,
-  InputAdornment
+  InputAdornment,
+  Tab,
+  Tabs
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search'
@@ -27,7 +29,7 @@ import AddSalaryComponentForm from '../components/salary-component/AddSalaryComp
 const SalaryComponent = () => {
   const dispatch: AppDispatch = useDispatch();
   const { salaryComponents, loading, error, total } = useSelector((state: RootState) => state.salaryComponents);
-
+  const [tabValue, setTabValue] = useState(''); // To track the selected tab
   const [showForm, setShowForm] = useState(false);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [selectedKeyword, setSelectedKeyword] = useState('');
@@ -39,9 +41,9 @@ const SalaryComponent = () => {
 
   const debouncedFetch = useCallback(
     debounce(() => {
-      dispatch(fetchSalaryComponents({ page, limit, keyword: selectedKeyword }));
+      dispatch(fetchSalaryComponents({ page, limit, keyword: selectedKeyword !== "" ? selectedKeyword : tabValue }));
     }, 300),
-    [page, limit, selectedKeyword]
+    [page, limit, selectedKeyword, tabValue]
   );
 
   useEffect(() => {
@@ -77,10 +79,24 @@ const SalaryComponent = () => {
     setShowForm(false);
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setTabValue(newValue);
+    // setSelectedKeyword(newValue)
+    setPage(1); // Reset pagination when switching tabs
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'type',
-      headerName: 'Type',
+      headerName: 'Name',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'calculationtype',
+      headerName: 'calculation Type',
       flex: 1.5,
       headerAlign: 'center',
       align: 'center',
@@ -93,6 +109,19 @@ const SalaryComponent = () => {
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header',
+      renderCell: (params) => {
+        const type = params.row.calculationtype
+        const amount = params.row.amount
+        return (
+          <>
+            {type === "Flat Amount" ? (
+              <Typography>₹{amount}</Typography>
+            ) :
+              <Typography>{amount}%</Typography>}
+          </>
+        )
+
+      }
     },
     {
       field: 'salarytype',
@@ -163,11 +192,18 @@ const SalaryComponent = () => {
             startIcon={<AddIcon />}
             onClick={handleComponentAddClick}
           >
-            Add Salary Component
+            Add Component
           </Button>
-
         </Box>}
       </Box>
+
+      <Tabs sx={{ mb: '2vh' }} value={tabValue} onChange={handleTabChange} textColor="primary" indicatorColor="primary">
+        <Tab label="All" value="" />
+        <Tab label="Earnings" value="Earnings" />
+        <Tab label="Deductions" value="Deductions" />
+        <Tab label="Benefits" value="Benefit" />
+        <Tab label="Reimbursements" value="Reimbursement" />
+      </Tabs>
 
       <Grid container spacing={6} alignItems='center' mb={2}>
         <Grid item xs={12} md={6}>

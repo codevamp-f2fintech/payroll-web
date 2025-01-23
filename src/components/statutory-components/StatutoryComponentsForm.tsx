@@ -11,21 +11,21 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
-import HraForm from './HRA';
-import Ltaform from './LTA';
-import Deductions from './Deductiononinterest';
-import Deductionunder from './Deductionunder';
-import SubmitPage from './DeclarationView';
-import BasicInfoForm from './Basicinfo';
-import Section80D from './Section80D';
+import EPFForm from './EPF';
+import ESIForm from './ESI';
+import LWFForm from './LWF';
+import ProfessionalTaxForm from './ProfessionalTax';
+import StatutoryBonusform from './StatutoryBonus';
 
-const DeclarationForm = ({ handleClose, declaration, debouncedFetch, declarations = [] }) => {
+const StatutoryComponentsForm = ({ handleClose, declaration, debouncedFetch, components = [] }) => {
   const [openForm, setOpenForm] = useState(null);
   const [formId, setformId] = useState(null)
 
-  const rowData = Array.isArray(declarations) && declaration
-    ? declarations.find((declare) => declare?._id === declaration) || null
+  const rowData = Array.isArray(components.data) && declaration
+    ? components.data.find((declare) => declare._id === declaration)
     : null;
+
+  console.log('rowdata', rowData, declaration, components)
   const handleOpenForm = (formName) => {
     setOpenForm(formName);
   };
@@ -34,11 +34,10 @@ const DeclarationForm = ({ handleClose, declaration, debouncedFetch, declaration
     setOpenForm(null);
   };
 
-  // Render form with edit mode support
   const renderFormContent = () => {
     switch (openForm) {
-      case 'Basicinfo':
-        return <BasicInfoForm
+      case 'EPF':
+        return <EPFForm
           handleClose={handleCloseForm}
           setformId={setformId}
           rowData={rowData}
@@ -47,46 +46,39 @@ const DeclarationForm = ({ handleClose, declaration, debouncedFetch, declaration
 
         />;
 
-      case 'hraform':
-        return <HraForm
+      case 'ESI':
+        return <ESIForm
           handleClose={handleCloseForm}
           formId={formId ?? declaration}
           rowData={rowData}
           debouncedFetch={debouncedFetch}
         />;
 
-      case 'ltaform':
-        return <Ltaform
+      // case 'LWF':
+      //   return <LWFForm
+      //     handleClose={handleCloseForm}
+      //     formId={formId ?? declaration}
+      //     rowData={rowData}
+      //     debouncedFetch={debouncedFetch}
+      //   />;
+
+      case 'ProfessionalTax':
+        return <ProfessionalTaxForm
           handleClose={handleCloseForm}
           formId={formId ?? declaration}
           rowData={rowData}
           debouncedFetch={debouncedFetch}
         />;
 
-      case 'Deductions':
-        return <Deductions
+      case 'StatutoryBonus':
+        return <StatutoryBonusform
           handleClose={handleCloseForm}
           formId={formId ?? declaration}
           rowData={rowData}
           debouncedFetch={debouncedFetch}
-        />;
 
-      case 'Deductionunderchapter':
-        return <Deductionunder
-          handleClose={handleCloseForm}
-          formId={formId ?? declaration}
-          rowData={rowData}
 
         />;
-      case 'Section80D':
-        return <Section80D
-          handleClose={handleCloseForm}
-          formId={formId ?? declaration}
-          rowData={rowData}
-
-        />;
-
-
       default:
         return null;
     }
@@ -141,7 +133,7 @@ const DeclarationForm = ({ handleClose, declaration, debouncedFetch, declaration
       {/* Tax Form Main Section */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography style={{ fontSize: '2em' }} variant="h5" gutterBottom>
-          Declaration
+          Statutory Components
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
@@ -157,53 +149,47 @@ const DeclarationForm = ({ handleClose, declaration, debouncedFetch, declaration
       <Box display="flex" flexDirection="column" gap={3}>
         {/* Basic Info Section */}
         {renderFormSection(
-          "Previous Employment tax Details",
-          "Basicinfo",
-          "basicInfo",
-          "Include previous salary,pf,total tax "
+          "Employees' Provident Fund (EPF) ",
+          "EPF",
+          "EPF",
+          "Include EPF Number,Deduction Cycle,Employee and Employer Contribution "
         )}
 
         {/* HRA Section */}
         {renderFormSection(
-          "House Rent Allowance",
-          "hraform",
-          "hra",
-          "Include Rent paid to the landlord, Name, Address"
+          "Employees' State Insurance (ESI)",
+          "ESI",
+          "ESI",
+          "Include ESI Nubmer,Employee and Employer Contribution"
         )}
 
         {/* LTA Section */}
-        {renderFormSection(
-          "Leave Travel Concessions",
-          "ltaform",
-          "lta",
-          "Include location, Expenditure and travel details"
-        )}
+        {/* {renderFormSection(
+          "Labour Welfare Fund",
+          "LWF",
+          "LWF",
+          "Include LWF Number,Employee and Employer Contribution"
+        )} */}
 
         {/* Deductions Section */}
         {renderFormSection(
-          "Income/loss from House Property (Housing Loan  Interest) ",
-          "Deductions",
-          "Deductions",
-          "Include Interest payable, Name and Address of lender"
+          "Professional Tax",
+          "ProfessionalTax",
+          "ProfessionalTax",
+          "Include Professional Tax"
         )}
 
         {/* Deductions Under Chapter */}
         {renderFormSection(
-          "Deduction under Section 80C ",
-          "Deductionunderchapter",
-          "Deductionsunder",
-          "Include all Investments and Expenses "
+          "Statutory Bonus ",
+          "StatutoryBonus",
+          "StatutoryBonus",
+          "Include Bonus payment cycle, percentage of bonus "
         )}
-        {renderFormSection(
-          "Deduction under Section 80D",
-          "Section80D",
-          "DeductionsunderB",
-          "Include all Health insurance premiums"
 
-        )}
       </Box>
     </>
   );
 };
 
-export default DeclarationForm;
+export default StatutoryComponentsForm;

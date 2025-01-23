@@ -4,9 +4,10 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 export interface SalaryTemplate {
   _id: string;
   name: string;
-  baseSalary: number;
-  earningTypes: string[];
-  deductionTypes: string[];
+  earnings: string[];
+  deductions: string[];
+  benefits: string[];
+  reimbursements: string[];
   description: string;
   createdBy: string;
   createdAt: Date;

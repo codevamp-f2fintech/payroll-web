@@ -11,6 +11,9 @@ import {
   Button,
   IconButton,
   FormHelperText,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
@@ -29,6 +32,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
   const [formData, setFormData] = useState({
     salarytype: '',
     type: '',
+    calculationtype: 'Flat Amount',
     amount: 0,
     description: '',
   });
@@ -40,23 +44,60 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
   });
 
   const salaryComponentTypes1 = [
-    'DA',
-    'HRA',
-    'Allowances',
+    'Basic', 'DA', 'HRA',
     'Medical allowance',
     'Conveyance allowance',
-    'Others'
+    'Commission', 'Transport Allowance',
+    'Children Education Allowance',
+    'Hostel Expenditure Allowance',
+    'Travelling Allowance',
+    'Uniform Allowance', 'Daily Allowance',
+    'City Compensatory Allowance',
+    'Overtime Allowance', 'Telephone Allowance',
+    'Project Allowance', 'Food Allowance',
+    'Holiday Allowance', 'Entertainment Allowance',
+    'Custom Allowance', 'Gift Coupon',
+    'Research Allowance', 'Books and Periodicals Allowance',
+    'Shift Allowance', 'Fuel Allowance', 'Driver Allowance',
+    'Leave Travel Allowance', 'Vehicle Maintenance Allowance',
+    'Telephone And Internet Allowance',
   ];
 
   const salaryComponentTypes2 = [
     'TDS',
     'ESI',
-    'PF',
+    'EPF',
     'Leave',
     'Prof.Tax',
-    'Labour Welfare',
     'Others'
   ];
+
+  const salaryComponentTypes3 = [
+    "Meal Coupons",
+    "Special Allowance",
+    "Tax-Free Allowances",
+    "Work-Related Benefits",
+    "Lifestyle Benefits",
+    "Wellness programs (gym memberships, yoga classes)"
+
+  ]
+
+  const salaryComponentTypes4 = [
+
+    "Club Reimbursement",
+    "Entertainment Reimbursement",
+    "Gadget Reimbursement",
+    "Books and Periodicals Reimbursement",
+    "Business Development Expense Reimbursement",
+    "Helper Reimbursement",
+    "Hostel Expenditure Reimbursement",
+    "Research Reimbursement",
+    "Uniform Reimbursement",
+    "Internet Reimbursement",
+    "Fuel Reimbursement",
+    "Driver Reimbursement",
+    "Telephone Reimbursement",
+  ]
 
   useEffect(() => {
     if (id) {
@@ -65,6 +106,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
         setFormData({
           salarytype: selected.salarytype,
           type: selected.type,
+          calculationtype: selected.calculationtype || 'Flat Amount',
           amount: selected.amount,
           description: selected.description,
         });
@@ -91,6 +133,13 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
 
     setErrors(newErrors);
     return isValid;
+  };
+
+  const handleCalculationTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      calculationtype: event.target.value
+    }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -130,7 +179,20 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     }
   };
 
-  const typeOptions = formData.salarytype === 'Earnings' ? salaryComponentTypes1 : salaryComponentTypes2;
+  const typeOptions = (() => {
+    switch (formData.salarytype) {
+      case 'Earnings':
+        return salaryComponentTypes1;
+      case 'Deductions':
+        return salaryComponentTypes2;
+      case 'Benefit':
+        return salaryComponentTypes3;
+      case 'Reimbursement':
+        return salaryComponentTypes4;
+      default:
+        return [];
+    }
+  })();
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
@@ -154,6 +216,8 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             >
               <MenuItem value="Earnings">Earnings</MenuItem>
               <MenuItem value="Deductions">Deductions</MenuItem>
+              <MenuItem value="Benefit">Benefit</MenuItem>
+              <MenuItem value="Reimbursement">Reimbursement</MenuItem>
             </Select>
             {errors.salarytype && <FormHelperText>{errors.salarytype}</FormHelperText>}
           </FormControl>
@@ -171,10 +235,48 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
           </FormControl>
         </Grid>
+
+
+        <Grid item xs={12}>
+          <FormControl component="fieldset">
+            <Typography variant="h6">Calculation Type*</Typography>
+            <RadioGroup
+              name="calculationtype"
+              value={formData.calculationtype}
+              onChange={handleCalculationTypeChange}
+              row
+            >
+              <FormControlLabel
+                value="Flat Amount"
+                control={<Radio />}
+                label="Flat Amount"
+              />
+              {formData.salarytype === 'Deductions' ? (
+                <FormControlLabel
+                  value="Percentage of Basic"
+                  control={<Radio />}
+                  label="Percentage of Basic"
+                />
+              ) : (
+                <FormControlLabel
+                  value="Percentage of CTC"
+                  control={<Radio />}
+                  label="Percentage of CTC"
+                />
+              )}
+            </RadioGroup>
+          </FormControl>
+        </Grid>
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Amount (In Rupees)"
+            label={
+              formData.calculationtype === 'percentage of CTC' ||
+                formData.calculationtype === 'Percentage of Basic'
+                ? 'Percentage (%)'
+                : 'Enter Amount (₹)'
+            }
             name="amount"
             type="number"
             value={formData.amount}
@@ -183,8 +285,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             error={!!errors.amount}
             helperText={errors.amount}
           />
-        </Grid>
-        <Grid item xs={12}>
+        </Grid>        <Grid item xs={12}>
           <TextField
             fullWidth
             label="Description"
