@@ -18,7 +18,7 @@ import { Upload } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
 
-const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole }) => {
+const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId }) => {
   const [formData, setFormData] = useState({
     loantype: '',
     amount: '',
@@ -33,6 +33,7 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole }) => {
 
   });
 
+  console.log('')
   const [errors, setErrors] = useState({
     loantype: '',
     amount: '',
@@ -160,6 +161,9 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole }) => {
       formDataToSend.append('perquisiteRate', formData.perquisiteRate);
       formDataToSend.append('status', formData.status);
 
+      if (!id) {
+        formDataToSend.append('employeeId', employeeId);
+      }
 
       if (formData.proof) {
         formDataToSend.append('file', formData.proof);

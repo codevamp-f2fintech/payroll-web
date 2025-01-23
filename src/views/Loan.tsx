@@ -36,6 +36,8 @@ const LoanComponent = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userRole = user?.role
+  const employeeId = user?.id
+  console.log('emp', employeeId)
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -79,17 +81,46 @@ const LoanComponent = () => {
 
   const columns = [
     {
-      field: 'reimbursements',
-      headerName: 'Name',
+      field: 'employeeId',
+      headerName: 'Employee Name',
+      flex: 1,
+      headerAlign: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: (params) => {
+        const employee = params.row.employee;
+        return employee ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <img
+              src={employee.image}
+              alt={`${employee.first_name} ${employee.last_name}`}
+              style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
+            />
+            <span>{employee.first_name} {employee.last_name}</span>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+        );
+      },
+    },
+    {
+      field: 'loantype',
+      headerName: 'Loan Type',
       flex: 1.5,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header'
     },
     {
-      field: 'date',
-      headerName: 'Date',
-      flex: 1.5,
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header'
@@ -111,8 +142,8 @@ const LoanComponent = () => {
     //   headerClassName: 'super-app-theme--header'
     // },
     {
-      field: 'description',
-      headerName: 'Description',
+      field: 'reason',
+      headerName: 'Reason',
       flex: 1.5,
       headerAlign: 'center',
       align: 'center',
@@ -146,6 +177,7 @@ const LoanComponent = () => {
             debouncedFetch={debouncedFetch}
             loans={loans}
             userRole={userRole}
+            employeeId={employeeId}
           />
         </DialogContent>
       </Dialog>

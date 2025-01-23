@@ -135,7 +135,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
 
     const method = employee ? 'PUT' : 'POST';
     const url = employee ? `${process.env.NEXT_PUBLIC_APP_URL}/employees/update/${employee}` : `${process.env.NEXT_PUBLIC_APP_URL}/employees/create`;
-
+    console.log('work')
     const formDataToSend = new FormData();
 
     for (const key in formData) {
