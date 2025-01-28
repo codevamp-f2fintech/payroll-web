@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+
 import {
     Card,
     CardContent,
@@ -49,11 +50,27 @@ const StyledCardHeader = styled(CardHeader)(({ theme }) => ({
     },
 }));
 
+// New styled component for inner cards with fixed text color
+const StyledInnerCard = styled(Card)({
+    background: '#ffffff !important',
+    '& .MuiCardContent-root': {
+        background: '#ffffff !important',
+    },
+    '& .MuiTypography-root': {
+        color: '#000000 !important', // Force black text color
+    },
+});
+
+// Styled Typography for consistent text color
+const StyledTypography = styled(Typography)({
+    color: '#000000 !important', // Force black text color
+});
+
 const SalaryPackage = () => {
     const [salaryDetails, setSalaryDetails] = useState<SalaryDetail[]>([]);
-    const [deductionDetails, setDeductionDetails] = useState<SalaryDetail[]>([]); // For deductions
+    const [deductionDetails, setDeductionDetails] = useState<SalaryDetail[]>([]);
     const [totalSalary, setTotalSalary] = useState(0);
-    const [baseSalary, setBaseSalary] = useState(0);  // Store base salary
+    const [baseSalary, setBaseSalary] = useState(0);
 
     useEffect(() => {
         const fetchSalaryDetails = async () => {
@@ -63,24 +80,26 @@ const SalaryPackage = () => {
 
                 if (!employeeId) {
                     console.error('Employee ID not found in local storage');
+
                     return;
                 }
 
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_APP_URL}/payroll/${employeeId}/earnings`
                 );
+
                 const result = await response.json();
 
                 if (result.success) {
                     const earnings = result.data.earnings;
-                    const deductions = result.data.deductions; // Assuming the deductions are returned here
-                    const base = result.data.baseSalary; // Assuming the baseSalary is returned here
-                    const total = earnings.reduce((sum, earning) => sum + earning.amount, 0) + base - deductions.reduce((sum, deduction) => sum + deduction.amount, 0);  // Subtract deductions
+                    const deductions = result.data.deductions;
+                    const base = result.data.baseSalary;
+                    const total = earnings.reduce((sum, earning) => sum + earning.amount, 0) + base - deductions.reduce((sum, deduction) => sum + deduction.amount, 0);
 
                     setSalaryDetails(earnings);
-                    setDeductionDetails(deductions);  // Set deduction details
-                    setBaseSalary(base);  // Set baseSalary
-                    setTotalSalary(total);  // Set total salary after deductions
+                    setDeductionDetails(deductions);
+                    setBaseSalary(base);
+                    setTotalSalary(total);
                 }
             } catch (error) {
                 console.error('Error fetching salary details:', error);
@@ -90,13 +109,12 @@ const SalaryPackage = () => {
         fetchSalaryDetails();
     }, []);
 
-    // Categories map, now including baseSalary and deductions
     const categories = [
         {
             label: 'Base Salary',
-            amount: baseSalary,  // baseSalary from state
+            amount: baseSalary,
             icon: CurrencyRupeeIcon,
-            bgcolor: 'rgba(25, 118, 210, 0.1)', // Blue background
+            bgcolor: 'rgba(25, 118, 210, 0.1)',
             iconColor: 'primary',
         },
         ...salaryDetails.map((item) => ({
@@ -124,8 +142,8 @@ const SalaryPackage = () => {
                             : item.type === 'Medical allowance'
                                 ? 'rgba(0, 188, 212, 0.1)'
                                 : item.type === 'Bonus'
-                                    ? 'rgba(255, 193, 7, 0.1)' // Bonus background color
-                                    : 'rgba(156, 39, 176, 0.1)', // Default background color
+                                    ? 'rgba(255, 193, 7, 0.1)'
+                                    : 'rgba(156, 39, 176, 0.1)',
             iconColor:
                 item.type === 'baseSalary'
                     ? 'primary'
@@ -136,12 +154,12 @@ const SalaryPackage = () => {
                             : item.type === 'Medical allowance'
                                 ? 'info'
                                 : item.type === 'Bonus'
-                                    ? 'warning'  // Bonus icon color
+                                    ? 'warning'
                                     : 'secondary',
         })),
         ...deductionDetails.map((item) => ({
             label: item.type === 'Others' ? item.otherType : item.type,
-            amount: -item.amount,  // Deductions are subtracted from total
+            amount: -item.amount,
             icon:
                 item.type === 'Tax'
                     ? NorthEastIcon
@@ -152,10 +170,10 @@ const SalaryPackage = () => {
                             : NorthEastIcon,
             bgcolor:
                 item.type === 'Tax'
-                    ? 'rgba(255, 87, 34, 0.1)'  // Tax background color
+                    ? 'rgba(255, 87, 34, 0.1)'
                     : item.type === 'Loan'
-                        ? 'rgba(255, 193, 7, 0.1)' // Loan background color
-                        : 'rgba(156, 39, 176, 0.1)',  // Default background color
+                        ? 'rgba(255, 193, 7, 0.1)'
+                        : 'rgba(156, 39, 176, 0.1)',
             iconColor:
                 item.type === 'Tax'
                     ? 'error'
@@ -193,17 +211,19 @@ const SalaryPackage = () => {
                 <Grid container spacing={3}>
                     {categories.map((category, index) => {
                         const IconComponent = category.icon;
+
+
                         return (
                             <Grid item xs={12} md={6} key={index}>
-                                <Card>
+                                <StyledInnerCard>
                                     <CardContent>
                                         <Box bgcolor={category.bgcolor} p={1} borderRadius={2}>
                                             <IconComponent color={category.iconColor} />
                                         </Box>
-                                        <Typography>{category.label}</Typography>
-                                        <Typography>{formatCurrency(category.amount)}</Typography>
+                                        <StyledTypography>{category.label}</StyledTypography>
+                                        <StyledTypography>{formatCurrency(category.amount)}</StyledTypography>
                                     </CardContent>
-                                </Card>
+                                </StyledInnerCard>
                             </Grid>
                         );
                     })}
