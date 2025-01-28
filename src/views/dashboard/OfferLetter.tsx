@@ -1,5 +1,7 @@
-'use client'
+'use client';
+
 import React, { useEffect, useState } from 'react';
+
 import {
     Card,
     CardContent,
@@ -12,7 +14,7 @@ import {
     Button,
     styled,
 } from '@mui/material';
-import { CalendarToday, Work, Business, Description } from '@mui/icons-material';
+import { CalendarToday, Work, Business } from '@mui/icons-material';
 
 // Styled Components
 const StyledCard = styled(Card)`
@@ -112,16 +114,31 @@ const OfferLetter = () => {
     const [userData, setUserData] = useState<any>(null);
     const [userRole, setUserRole] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(true); // Loading state
+    const [dynamicText, setDynamicText] = useState<string>("Aboard");
 
-    const formatDate = (dateString) => {
+    // Format Date Utility
+    const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
+    // Dynamic Text Effect
+    useEffect(() => {
+        const text = "Aboard!!";
+        let index = 0;
 
+        const interval = setInterval(() => {
+            setDynamicText(text.slice(0, index + 1));
+            index = (index + 1) % text.length;
+        }, 450);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fetch User Data
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -129,14 +146,15 @@ const OfferLetter = () => {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/employees/get/${user.id}`);
                 const result = await response.json();
+
                 console.log('Fetched Data:', result);
 
-                // Set userData with the extracted `data` field
                 if (result.success) {
                     setUserData(result.data);
                 } else {
                     console.error('Failed to fetch user data:', result.message || 'Unknown error');
                 }
+
                 setLoading(false); // Set loading to false
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -151,23 +169,21 @@ const OfferLetter = () => {
         }
     }, []);
 
-
-
+    // Loading State
     if (loading) {
-        return <Typography align="center">Loading...</Typography>; // Display while loading
+        return <Typography align="center">Loading...</Typography>;
     }
 
+    // No Data Found
     if (!userData) {
-        return <Typography align="center">No user data found.</Typography>; // Handle no data scenario
+        return <Typography align="center">No user data found.</Typography>;
     }
 
-
-
-
+    // Render Offer Letter
     return (
         <StyledCard elevation={5}>
             <StyledCardHeader
-                title="Welcome Aboard!"
+                title={`Welcome ${dynamicText}!`}
                 subheader={
                     <>
                         <WelcomeMessage>

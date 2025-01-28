@@ -1,76 +1,74 @@
-'use client'
-import { useState } from "react";
+//footercontent.tsx
+'use client';
 
-// Next Imports
+import { useState } from "react"; // Added for toggling contact details
 
-// Third-party Imports
-
-// Hook Imports
 import { Container, Box, Typography, Link, Stack, Divider } from "@mui/material";
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-
-import useVerticalNav from '@menu/hooks/useVerticalNav';
-
-
+import PhoneIcon from '@mui/icons-material/Phone'; // Added for displaying phone icon
+import EmailIcon from '@mui/icons-material/Email'; // Added for displaying email icon
+import LocationOnIcon from '@mui/icons-material/LocationOn'; // Added for location icon
 
 const FooterContent = () => {
   const [showContactDetails, setShowContactDetails] = useState(false);
 
   const handleContactClick = () => {
-    setShowContactDetails(!showContactDetails); // Toggle contact details visibility
+    setShowContactDetails(!showContactDetails);
   };
 
   return (
     <Container
-
       maxWidth={false}
       sx={{
-        background: "#2e7d32",
+        background: "linear-gradient(145deg, rgb(46, 125, 50) 60%,rgb(122, 186, 120) 60%)",
+        color: 'white',
+        padding: '1rem 1rem', // Adjusted padding for reduced bottom space
 
-        // padding: '2rem 1rem', // Adjust padding for responsiveness
-        // margin: "0px"
       }}
     >
+
       <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", md: "row" }, // Stack vertically on small screens
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: { xs: "center", md: "flex-start" }, // Center items on small screens
-          padding: '2rem 1rem'
+          alignItems: { xs: "center", md: "flex-start" },
         }}
       >
-        <Box width={{ xs: "100%", md: 350 }} textAlign={{ xs: "center", md: "left" }} mb={{ xs: 4, md: 0 }}>
+        {/* Left column - Company Info */}
+        <Box width={{ xs: "100%", md: 300 }} textAlign={{ xs: "center", md: "left" }} mb={{ xs: 3, md: 0 }}>
+          {/* <img
+            src="/images/logos/fintech.png"
+            alt="F2 Fintech Logo"
+            style={{ width: '90px', height: '90px', marginRight: '10px' }} // Adjust size and margin
+          /> */}
           <Typography
-            variant="h4"
+            variant="h5"
             sx={{ fontWeight: "600", color: "white", marginBottom: "1rem" }}
           >
             F2-FINTECH
           </Typography>
-          <Box display="flex" justifyContent={{ xs: "center", md: "flex-start" }} alignItems="center" sx={{ color: "white", lineHeight: "2rem" }}>
+          <Box display="flex" alignItems="center" sx={{ color: "white", lineHeight: "1.5rem" }}>
             <LocationOnIcon sx={{ marginRight: "0.5rem" }} />
             <Link
-              href="https://www.google.com/maps/place/F2+Fintech/@28.6298965,77.3786547,17z/data=!3m1!5s0x390ceff85302d5d3:0x2c0770794e1ff53f!4m6!3m5!1s0x390ceff7c76d1b4f:0x13317a05dd04cb37!8m2!3d28.6298918!4d77.3812296!16s%2Fg%2F11tdl471bb?entry=ttu"
+              href="https://www.google.com/maps/place/F2+Fintech"
               target="_blank"
               sx={{ color: "white" }}
               underline="none"
             >
-              <Typography variant="h6" sx={{ color: "white" }}>
+              <Typography variant="body1" sx={{ color: "white" }}>
                 A-25, M-1 Arv Park, A-Block, Sector-63, Noida Uttar Pradesh - 201301
               </Typography>
             </Link>
           </Box>
-          <Box display="flex" justifyContent={{ xs: "center", md: "flex-start" }} alignItems="center" sx={{ color: "white", lineHeight: "2rem", mt: '1.5rem' }}>
+          <Box display="flex" alignItems="center" sx={{ color: "white", lineHeight: "1.5rem", mt: '1rem' }}>
             <LocationOnIcon sx={{ marginRight: "0.5rem" }} />
             <Link
-              href="https://www.google.com/maps/place/28%C2%B022'20.4%22N+79%C2%B025'25.9%22E/@28.3723431,79.4212761,17z/data=!3m1!4b1!4m4!3m3!8m2!3d28.3723431!4d79.423851?entry=ttu"
+              href="https://www.google.com/maps/place/28%C2%B022'20.4%22N+79%C2%B025'25.9%22E/"
               target="_blank"
               sx={{ color: "white" }}
               underline="none"
             >
-              <Typography variant="h6" sx={{ color: "white" }}>
+              <Typography variant="body1" sx={{ color: "white" }}>
                 12, Bajaj Complex, Prem Nagar Thana, Bareilly - 243005
               </Typography>
             </Link>
@@ -88,112 +86,126 @@ const FooterContent = () => {
               </Typography>
             </Link>
           </Box>
-
         </Box>
+
+        {/* Middle columns - Company links */}
         <Box
-          sx={{ display: "flex", flexDirection: "column", textAlign: { xs: "center", md: "left" }, mb: { xs: 4, md: 0 } }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            textAlign: { xs: "center", md: "left" },
+            mb: { xs: 3, md: 0 }
+          }}
         >
           <Typography
-            variant="h5"
+            variant="h6"
             sx={{ fontWeight: "600", color: "white", marginBottom: "1rem" }}
           >
             Company
           </Typography>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem" }}
-          >
-            About us
-          </Link>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem" }}
-          >
-            Blogs
-          </Link>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem" }}
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem" }}
-          >
-            Term & Condition
-          </Link>
+          {["About us", "Blogs", "Privacy Policy", "Term & Condition"].map((text) => (
+            <Link
+              key={text}
+              href="#"
+              underline="none"
+              variant="body1"
+              sx={{ color: "white", marginBottom: "0.5rem" }}
+            >
+              {text}
+            </Link>
+          ))}
         </Box>
+
+        {/* Right column - Let's Talk */}
         <Box
-          sx={{ display: "flex", flexDirection: "column", textAlign: { xs: "center", md: "left" } }}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: { xs: "center", md: "flex-start" },
+            textAlign: "left",
+          }}
         >
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "600", color: "white", marginBottom: "1rem" }}
+          {/* <Typography
+            variant="h6"
+            sx={{ fontWeight: "600", color: "white", marginBottom: "0.5rem" }}
           >
             Let's Talk
-          </Typography>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem" }}
+          </Typography> */}
+          <Stack
+            direction="column"
+            spacing={1} // Spacing between items
+            sx={{ textAlign: "center", color: "white" }}
           >
-            Have any doubts?
-          </Link>
-          <Link
-            underline="none"
-            variant="h6"
-            sx={{ color: "white", marginBottom: "1rem", cursor: "pointer" }} // Add cursor pointer
-            onClick={handleContactClick} // Handle the click event
-          >
-            Contact Us
-          </Link>
+            <Link
+              href="#"
+              underline="none"
+              variant="body1"
+              sx={{ color: "white" }}
+            >
+              Have any doubts?
+            </Link>
+            <Link
+              component="button"
+              underline="none"
+              variant="body1"
+              sx={{ color: "white", cursor: "pointer" }}
+              onClick={handleContactClick}
+            >
+              Contact Us
+            </Link>
+          </Stack>
           {showContactDetails && (
             <Box
               sx={{
                 mt: 2,
-                p: 3,
-                borderRadius: "8px", // Rounded corners
-                backgroundColor: "white", // Solid white box background
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Soft shadow for depth
-                color: "black", // Set text color to black for readability on white background
-                maxWidth: "500px", // Set max-width for better responsiveness
+                p: 2,
+                borderRadius: "8px",
+                backgroundColor: "white",
+                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                color: "black",
+                maxWidth: "400px",
                 textAlign: "center",
-                mx: "auto", // Center horizontally
               }}
             >
-              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
+              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
                 <PhoneIcon sx={{ marginRight: "0.5rem", color: "black" }} />
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>+91 8810600135</Typography>
+                <Typography variant="body1" sx={{ fontWeight: "bold" }}>+91 8810600135</Typography>
               </Box>
-              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
+              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
                 <EmailIcon sx={{ marginRight: "0.5rem", color: "black" }} />
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>wecare@f2fintech.com</Typography>
+                <Typography variant="body1" sx={{ fontWeight: "bold" }}>wecare@f2fintech.com</Typography>
               </Box>
-              <Typography variant="h6" sx={{ marginTop: "2rem" }}> {/* Add margin-top for spacing */}
-                We are a Global Electronic Marketplace for Buying & Selling Loans.
-                Delegate your financial worries to us and focus on growing your core profession.
-              </Typography>
             </Box>
           )}
-
-          <Stack direction="row" spacing={3}>
-          </Stack>
         </Box>
       </Box>
-      <Typography sx={{ color: 'white', fontSize: '15px', mt: 4, textAlign: 'center' }}>
-        © 2024 All Rights Reserved by F2 Fintech
-      </Typography>
-      <Divider color="white" sx={{ height: "1px", mt: 4 }} />
-      <Typography sx={{ color: 'white', fontSize: '15px', mt: 2, textAlign: 'center' }}>
+
+      <Divider sx={{
+        backgroundColor: 'rgba(255,255,255,0.5)', // Subtle color for divider
+        height: '2px', // Ensures consistent height
+        margin: '1rem 0', // Added spacing above and below the divider
+        width: '100%', // Makes the divider span the full width
+      }} />
+
+      <Box sx={{
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        padding: '0.5rem', // Reduced padding
+      }}>
+        <Typography sx={{ color: 'white', fontSize: '13px', textAlign: 'center' }}>
+          © 2024 All Rights Reserved by F2 Fintech
+        </Typography>
+      </Box>
+
+      <Typography sx={{
+        color: 'white',
+        fontSize: '16px',
+        mt: 1,
+        textAlign: 'center',
+      }}>
         True wealth is not measured by the size of your bank account, but by the freedom to live life on your own terms.
       </Typography>
     </Container>
-  )
-}
+  );
+};
 
 export default FooterContent;

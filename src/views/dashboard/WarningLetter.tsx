@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+
 import {
     Box,
     Card,
@@ -22,8 +23,9 @@ import {
 import {
     Wallet,
     CurrencyRupee,
+    MoreVert
 } from '@mui/icons-material';
-import { MoreVert } from '@mui/icons-material';
+
 import ExpenseForm from '@/components/expenses/ExpenseForm';
 
 // Interfaces for financial data
@@ -62,9 +64,11 @@ const WarningLetter: React.FC = () => {
             const fetchExpenseData = async () => {
                 try {
                     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/expenses/employee/${employeeId}`);
+
                     if (!response.ok) {
                         throw new Error('Failed to fetch expense data');
                     }
+
                     const data = await response.json();
 
                     setTotalValue(data.totalValue);
@@ -130,6 +134,7 @@ const WarningLetter: React.FC = () => {
             <CardHeader
                 avatar={icon}
                 action={
+
                     // This will display the icon in the top-right corner of the header
                     <IconButton
                         sx={{ color: theme.palette.text.primary }}
@@ -141,7 +146,7 @@ const WarningLetter: React.FC = () => {
                 title={
                     <Typography
                         variant="h6"
-                        color="primary"
+                        color="white"  // Change text color to white
                         sx={{
                             fontWeight: 600,
                             textTransform: 'uppercase',
@@ -152,12 +157,16 @@ const WarningLetter: React.FC = () => {
                     </Typography>
                 }
                 sx={{
-                    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                    backgroundColor: '#2e7d32',  // Set background color to green
                     borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
             />
 
-            <CardContent>
+            <CardContent
+                sx={{
+                    backgroundColor: 'white',  // Set background to white for CardContent
+                }}
+            >
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                         <Pie
@@ -177,10 +186,14 @@ const WarningLetter: React.FC = () => {
                         <Tooltip
                             formatter={(value, name) => [`${value}`, name]}
                             contentStyle={{
-                                backgroundColor: theme.palette.background.paper,
+                                backgroundColor: 'white',  // Set background color to white
+                                color: 'black',            // Set text color to black for better contrast
                                 borderRadius: '12px',
                                 boxShadow: theme.shadows[2],
                                 border: 'none',
+                            }}
+                            labelStyle={{
+                                color: 'blue',  // Set the label text color to blue (change as needed)
                             }}
                         />
                         <Legend
@@ -193,13 +206,15 @@ const WarningLetter: React.FC = () => {
                 </ResponsiveContainer>
                 {showForm && (
                     <ExpenseForm
-                        title={selectedExpenseId ? "Update Expense" : "Create Expense"}  // Title changes depending on create or update
+                        title={selectedExpenseId ? "Update Expense" : "Create Expense"}
                         selectedExpenseId={selectedExpenseId}
                         onClose={handleFormClose}
                         propData={propData}
                     />
                 )}
             </CardContent>
+
+
         </Card>
     );
 
@@ -217,11 +232,11 @@ const WarningLetter: React.FC = () => {
         <Container maxWidth="md" sx={{ py: 4 }}>
             <Grid container spacing={3}>
                 {/* Expense Breakdown */}
-                <Grid item xs={12}>
+                <Grid item xs={16}>
                     {renderPieChart(
                         expenseData,
                         'Expense Breakdown',
-                        <Wallet color="primary" sx={{ fontSize: 32 }} />
+                        <Wallet sx={{ fontSize: 32, color: 'white' }} /> // Updated icon color
                     )}
 
                 </Grid>
