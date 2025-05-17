@@ -174,7 +174,7 @@ export const PayslipProvider = ({ children }) => {
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <img
                   src={"/images/logos/fintech.png"}
-                  alt='Company Logo'
+                  alt='Company logo'
                   style={{ width: '100px', marginRight: '1rem' }}
                 />
                 <div>
