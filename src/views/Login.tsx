@@ -25,6 +25,7 @@ import Logo from '@components/layout/shared/Logo';
 import Illustrations from '@components/Illustrations';
 import themeConfig from '@configs/themeConfig';
 import Loader from '../components/loader/loader'
+import Company from '@/app/(dashboard)/company/page';
 
 const Login = ({ mode }: { mode: Mode }) => {
   const [isPasswordShown, setIsPasswordShown] = useState(false);
@@ -69,6 +70,7 @@ const Login = ({ mode }: { mode: Mode }) => {
         id: data.payload.id,
         role: data.payload.role,
         desg: data.payload.designation,
+        company_id: data.payload.company_id
       }));
 
       toast.success('Login successful!', {

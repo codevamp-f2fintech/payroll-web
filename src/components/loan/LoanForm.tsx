@@ -19,6 +19,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
 
 const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId }) => {
+  const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user')) : {};
+
   const [formData, setFormData] = useState({
     loantype: '',
     amount: '',
@@ -26,14 +28,16 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
     proof: null,
     reason: '',
     repaymentdate: '',
-    instalment: '',
+    installment: '',
     isExempt: false,
-    perquisiteRate: '',  // New field for admin
+    perquisiteRate: '',
     status: 'pending',
+    company_id: company_id
+
 
   });
+  const [preview, setPreview] = useState(null);
 
-  console.log('')
   const [errors, setErrors] = useState({
     loantype: '',
     amount: '',
@@ -41,7 +45,7 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
     proof: '',
     reason: '',
     repaymentdate: '',
-    instalment: '',
+    installment: '',
     perquisiteRate: '',
     status: '',
 
@@ -52,23 +56,30 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
     if (id) {
       const selected = loans.find(temp => temp._id === id);
       if (selected) {
+        // Convert date strings to YYYY-MM-DD format
+        const formatDate = (dateString) => {
+          if (!dateString) return '';
+          return new Date(dateString).toISOString().split('T')[0];
+        };
+
         setFormData({
           loantype: selected.loantype,
           amount: selected.amount,
-          date: selected.date,
-          proof: selected.proof,
+          date: formatDate(selected.date),
           reason: selected.reason,
-          repaymentdate: selected.repaymentdate,
-          instalment: selected.instalment,
+          repaymentdate: formatDate(selected.repaymentdate),
+          installment: selected.installment,
           isExempt: selected.isExempt || false,
           perquisiteRate: selected.perquisiteRate || '',
           status: selected.status || 'pending',
-
-
+          company_id: selected.company_id,
+          proof: null,
         });
+        setPreview(selected.proof);
       }
     }
   }, [id, loans]);
+
 
   const validateForm = () => {
     let isValid = true;
@@ -79,7 +90,8 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
       proof: '',
       reason: '',
       repaymentdate: '',
-      instalment: '',
+      installment
+        : '',
     };
 
     if (!formData.loantype) {
@@ -97,7 +109,7 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
       isValid = false;
     }
 
-    if (!formData.proof) {
+    if (!id && !formData.proof) {
       newErrors.proof = 'Proof document is required';
       isValid = false;
     }
@@ -106,8 +118,8 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
       newErrors.reason = 'reason is required';
       isValid = false;
     }
-    if (!formData.instalment || formData.instalment <= 0) {
-      newErrors.instalment = 'Valid instalment is required';
+    if (!formData.installment || formData.installment <= 0) {
+      newErrors.installment = 'Valid installment is required';
       isValid = false;
     }
 
@@ -133,13 +145,20 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        proof: file,
-      }));
+      setFormData((prev) => ({ ...prev, proof: file }));
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
     }
   };
 
@@ -156,11 +175,11 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
       formDataToSend.append('date', formData.date);
       formDataToSend.append('reason', formData.reason);
       formDataToSend.append('repaymentdate', formData.repaymentdate);
-      formDataToSend.append('instalment', formData.instalment);
+      formDataToSend.append('installment', formData.installment);
       formDataToSend.append('isExempt', formData.isExempt);
       formDataToSend.append('perquisiteRate', formData.perquisiteRate);
       formDataToSend.append('status', formData.status);
-
+      formDataToSend.append('company_id', formData.company_id)
       if (!id) {
         formDataToSend.append('employeeId', employeeId);
       }
@@ -235,7 +254,6 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
                 onChange={(e) => handleChange('perquisiteRate', e.target.value)}
                 error={!!errors.perquisiteRate}
                 helperText={errors.perquisiteRate}
-                disabled={formData.isExempt}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -257,7 +275,6 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
             </Grid>
           </>
         )}
-
 
         <Grid item xs={12} md={6}>
           <TextField
@@ -294,17 +311,15 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
                 {errors.proof}
               </Typography>
             )}
-            {formData.proof && (
+            {preview && (
               <>
-                {formData.proof.type.startsWith('image/') && (
-                  <Box mt={2} textAlign="center">
-                    <img
-                      src={formData.proof.preview}
-                      alt="Preview"
-                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
-                    />
-                  </Box>
-                )}
+                <Box mt={2} textAlign="center">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                  />
+                </Box>
               </>
             )}
           </Box>
@@ -337,11 +352,6 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
             According to Rule 3(A), employees availing medical loan or any loan below ₹20,000 can be exempted from perquisite calculation.
           </Typography>
         </Grid>
-        <Grid item xs={12} mt={5}>
-          <Typography>
-            Repayment
-          </Typography>
-        </Grid>
 
         <Grid item xs={12} md={6}>
           <TextField
@@ -358,14 +368,14 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
         </Grid>
         <Grid item xs={12} md={6}>
           <TextField
-            label="Instalment Amount (₹)"
+            label="installment Amount (₹)"
             type="number"
             fullWidth
             margin="normal"
-            value={formData.instalment}
-            onChange={(e) => handleChange('instalment', e.target.value)}
-            error={!!errors.instalment}
-            helperText={errors.instalment}
+            value={formData.installment}
+            onChange={(e) => handleChange('installment', e.target.value)}
+            error={!!errors.installment}
+            helperText={errors.installment}
           />
         </Grid>
 
@@ -377,7 +387,7 @@ const LoanForm = ({ id, handleClose, debouncedFetch, loans, userRole, employeeId
             color="primary"
             onClick={handleSubmit}
           >
-            add
+            {id ? 'Update' : 'Add'}
           </Button>
         </Grid>
 

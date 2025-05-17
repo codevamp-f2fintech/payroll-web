@@ -5,34 +5,42 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { toast, ToastContainer } from 'react-toastify';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import type { AppDispatch, RootState } from '../../redux/store';
 import { addOrUpdateEmployee } from '@/redux/features/employees/employeesSlice';
+import { fetchCompanies } from '@/redux/features/company/companyslice';
+import { fetchDesignations } from '@/redux/features/designation/desingationSlice';
 
 import { utility } from '@/utility';
 
 import 'react-toastify/dist/ReactToastify.css';
 
 const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }) => {
+  const { companies } = useSelector((state: RootState) => state.companies);
+  const { designations } = useSelector((state: RootState) => state.designations);
+
 
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
-    work_email: "",
-    contact: "",
+    // work_email: "",
+    // contact: "",
     role_priority: "",
-    dob: "",
-    gender: "",
+    // dob: "",
+    // gender: "",
     designation: "",
     password: "",
     confirm_password: "",
     joining_date: "",
-    leaving_date: "",
-    status: "active",
+    // leaving_date: "",
+    // status: "active",
     image: "",
     code: "",
-    location: "",
+    // location: "",
+    company_id: ""
+
   });
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -43,6 +51,9 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
   const dispatch: AppDispatch = useDispatch();
   const { capitalizeInput } = utility();
 
+  const { role, company_id } = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user')) : {};
+
+
   useEffect(() => {
     if (employee) {
       const selected = employees.find(t => t._id === employee);
@@ -52,30 +63,41 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
           first_name: selected.first_name,
           last_name: selected.last_name,
           email: selected.email,
-          work_email: selected.work_email,
-          contact: selected.contact,
+          // work_email: selected.work_email,
+          // contact: selected.contact,
           role_priority: selected.role_priority,
-          dob: selected.dob,
-          gender: selected.gender,
+          // dob: selected.dob,
+          // gender: selected.gender,
           designation: selected.designation,
           password: selected.password,
           confirm_password: "",
           joining_date: selected.joining_date,
-          leaving_date: selected.leaving_date,
-          status: selected.status,
+          // leaving_date: selected.leaving_date,
+          // status: selected.status,
           image: selected.image,
           code: selected.code,
-          location: selected.location
+          // location: selected.location
+          company_id: selected.company_id
+
         });
         setImagePreviewUrl(selected.image);
       }
     }
-
+    if (role !== "0" && company_id) {
+      setFormData(prev => ({
+        ...prev,
+        company_id: company_id
+      }));
+    }
     if (!employee) {
       setIsPasswordFieldVisible(true);
     }
   }, [employee, employees]);
 
+  useEffect(() => {
+    dispatch(fetchDesignations({ page: 1, limit: 0, keyword: "" }));
+    dispatch(fetchCompanies({ page: 1, limit: 0, keyword: "" }));
+  }, [])
   const handleClickShowPassword = () => setIsPasswordShown(show => !show);
 
   const handleChange = (e) => {
@@ -113,13 +135,15 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
 
   const validate = () => {
     const newErrors = {};
-    const requiredFields = ['first_name', 'last_name', 'email', 'work_email', 'contact', 'role_priority', 'dob', 'gender', 'designation', 'joining_date', 'password', 'code', 'location'];
+    const requiredFields = role !== "0" ? ['first_name', 'last_name', 'email', 'role_priority', 'joining_date', 'designation', 'password', 'code',]
+      : ['first_name', 'last_name', 'email', 'password', 'role_priority', 'company_id',];
 
     requiredFields.forEach(field => {
       if (!formData[field]) {
         newErrors[field] = `${field.replace('_', ' ')} is require`
       }
     });
+    console.log(newErrors); // Add this to debug validation errors
 
     if (formData.password !== formData.confirm_password && isPasswordFieldVisible) {
       newErrors.confirm_password = 'Passwords do not match';
@@ -135,7 +159,6 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
 
     const method = employee ? 'PUT' : 'POST';
     const url = employee ? `${process.env.NEXT_PUBLIC_APP_URL}/employees/update/${employee}` : `${process.env.NEXT_PUBLIC_APP_URL}/employees/create`;
-    console.log('work')
     const formDataToSend = new FormData();
 
     for (const key in formData) {
@@ -165,21 +188,19 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
           if (employee) {
             dispatch(addOrUpdateEmployee(data));
             toast.success('Employee updated successfully!');
+            handleClose()
           } else {
             dispatch(fetchEmployees({ page, limit: 12, search: '', designation: '' }));
             toast.success('Employee created successfully!');
+            handleClose()
           }
-
-          setTimeout(() => handleClose(), 3000);
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        toast.error('An error occurred. Please try again.');
+        toast.error(data.message);
       });
   };
-
-
 
   const handlePasswordFieldVisibility = () => {
     setIsPasswordFieldVisible(true);
@@ -191,7 +212,6 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
-      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} />
       <Box display='flex' justifyContent='space-between' alignItems='center'>
         <Typography style={{ fontSize: '2em' }} variant='h5' gutterBottom>
           {employee ? 'Edit Employee' : 'Add Employee'}
@@ -234,7 +254,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             helperText={errors.last_name}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <TextField
             fullWidth
             label='Contact'
@@ -245,7 +265,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             error={!!errors.contact}
             helperText={errors.contact}
           />
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -261,6 +281,20 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
+            label='Joining Date'
+            type='date'
+            name='joining_date'
+            value={formData.joining_date}
+            onChange={handleChange}
+            InputLabelProps={{ shrink: true }}
+            required
+            error={!!errors.joining_date}
+            helperText={errors.joining_date}
+          />
+        </Grid>
+        {/* <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
             label='Work Email'
             name='work_email'
             value={formData.work_email}
@@ -269,8 +303,8 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             error={!!errors.work_email}
             helperText={errors.work_email}
           />
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </Grid> */}
+        {/* <Grid item xs={12} md={6}>
           <TextField
             fullWidth
             type='date'
@@ -283,8 +317,8 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             error={!!errors.dob}
             helperText={errors.dob}
           />
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </Grid> */}
+        {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!errors.gender}>
             <InputLabel required id='demo-simple-select-label'>
               Select Gender
@@ -304,7 +338,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             </Select>
             {errors.gender && <Typography color='error'>{errors.gender}</Typography>}
           </FormControl>
-        </Grid>
+        </Grid> */}
         {isPasswordFieldVisible && (
           <>
             <Grid item xs={12} md={6}>
@@ -363,21 +397,8 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             </Grid>
           </>
         )}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Joining Date'
-            type='date'
-            name='joining_date'
-            value={formData.joining_date}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            required
-            error={!!errors.joining_date}
-            helperText={errors.joining_date}
-          />
-        </Grid>
-        {employee &&
+
+        {/* {employee &&
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -389,8 +410,8 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-        }
-        <Grid item xs={12} md={6}>
+        } */}
+        {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth >
             <InputLabel id='demo-simple-select-label'>Select Status</InputLabel>
             <Select
@@ -406,7 +427,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
               <MenuItem value='inactive'>In Active</MenuItem>
             </Select>
           </FormControl>
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!errors.role_priority}>
             <InputLabel id='demo-simple-select-label'>Select Role</InputLabel>
@@ -419,49 +440,107 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
               onChange={handleChange}
               fullWidth
             >
+
+              {role === "0" && <MenuItem value='0'>Super User</MenuItem>}
               <MenuItem value='1'>Admin</MenuItem>
-              <MenuItem value='2'>Manager</MenuItem>
-              <MenuItem value='3'>Employee</MenuItem>
-              <MenuItem value='4'>Channel Partner</MenuItem>
+              <MenuItem value='2' disabled={role === "0"}>Manager</MenuItem>
+              <MenuItem value='3' disabled={role === "0"}>Employee</MenuItem>
+              <MenuItem value='4' disabled={role === "0"}>Channel Partner</MenuItem>
             </Select>
             {errors.role_priority && <Typography color='error'>{errors.role_priority}</Typography>}
           </FormControl>
         </Grid>
-        {/* <Grid item xs={12} md={6}>
-          <FormControl fullWidth error={!!errors.designation}>
-            <Autocomplete
-              id="designation-select"
-              options={designations
-                .map((designation) => designation.title)
-                .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))}
-              getOptionLabel={(option) => option}
-              renderInput={(params) => (
-                <TextField {...params} label="Select Designation" variant="outlined" />
-              )}
-              value={formData.designation}
-              onChange={(event, newValue) => {
-                handleChange({ target: { name: "designation", value: newValue } });
-              }}
-            />
-            {errors.designation && (
-              <Typography color="error">{errors.designation}</Typography>
-            )}
-          </FormControl>
-        </Grid> */}
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Employee code'
-            name='code'
-            value={formData.code}
-            onChange={handleChange}
-            required
-            error={!!errors.code}
-            helperText={errors.code}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
+        {role > 0 &&
+          < Grid item xs={12} md={6}>
+            <FormControl fullWidth error={!!errors.designation}>
+              <Autocomplete
+                id="designation-select"
+                options={designations
+                  .map((designation) => designation.title)
+                  .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))}
+                getOptionLabel={(option) => option}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Select Designation"
+                    variant="outlined"
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                        </InputAdornment>
+                      ),
+                    }}
+                  // sx={{
+                  //   '& .MuiInputLabel-root': {
+                  //     // Change label text color to black
+                  //   },
+                  //   '& .MuiOutlinedInput-root': {
+                  //     '& fieldset': {
+                  //       borderColor: 'black', // Set border color to black
+                  //     },
+                  //     '&:hover fieldset': {
+                  //       borderColor: 'black', // Set hover border color to black
+                  //     },
+                  //     '&.Mui-focused fieldset': {
+                  //       borderColor: 'black', // Set focused border color to black
+                  //     },
+                  //   },
+                  //   '& .MuiInputBase-input': {
+                  //     color: 'black', // Change input text color to black
+                  //   },
+                  // }}
+                  />
+
+                )}
+                value={formData.designation}
+                onChange={(event, newValue) => {
+                  handleChange({ target: { name: "designation", value: newValue } });
+                }}
+              />
+              {errors.designation && (
+                <Typography color="error">{errors.designation}</Typography>
+              )}
+            </FormControl>
+          </Grid>}
+        {role === "0" &&
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth error={!!errors.company_id}>
+              <Autocomplete
+                id="company-select"
+                options={companies}
+                getOptionLabel={(option) => option.name}
+                renderInput={(params) => (
+                  <TextField {...params} label="Select Company" variant="outlined" />
+                )}
+                value={companies.find(company => company._id === formData.company_id) || null}
+                onChange={(event, newValue) => {
+                  handleChange({ target: { name: "company_id", value: newValue?._id || null } });
+                }}
+              />
+              {errors.company_id && (
+                <Typography color="error">{errors.company_id}</Typography>
+              )}
+            </FormControl>
+          </Grid>
+        }
+
+        {role > 0 &&
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label='Employee code'
+              name='code'
+              value={formData.code}
+              onChange={handleChange}
+              required
+              error={!!errors.code}
+              helperText={errors.code}
+            />
+          </Grid>
+        }
+        {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth error={!!errors.location}>
             <InputLabel id='demo-simple-select-label'>Select Location</InputLabel>
             <Select
@@ -479,7 +558,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
             </Select>
             {errors.location && <Typography color='error'>{errors.location}</Typography>}
           </FormControl>
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} md={6}>
           <Box display="flex" flexDirection="column">
             <Button variant='contained' component='label'>
@@ -510,7 +589,7 @@ const EmployeeForm = ({ handleClose, employee, employees, fetchEmployees, page }
                 fontWeight: 600,
                 color: 'white',
                 padding: 15,
-                backgroundColor: '#ff902f',
+                backgroundColor: '#2e7d32',
                 width: 200
               }}
               variant='contained'

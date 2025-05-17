@@ -40,6 +40,7 @@ export const fetchLoans = createAsyncThunk<{
   async ({ page = 1, limit = 10, keyword = "" }) => {
     try {
       let token: string | null = null;
+      const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
 
       // Retrieve token from localStorage if running in the browser
       if (typeof window !== "undefined") {
@@ -55,7 +56,7 @@ export const fetchLoans = createAsyncThunk<{
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token} ${company_id}`,
             "Content-Type": "application/json",
           },
         }

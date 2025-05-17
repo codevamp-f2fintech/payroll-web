@@ -17,17 +17,23 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import { fetchComponentTypes } from "@/redux/features/componentType/componentTypeSlice";
 
 interface AddSalaryComponentFormProps {
   id: string | null;
   handleClose: () => void;
   debouncedFetch: () => void;
+  salaryComponents: any[];
 }
 
-const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, handleClose, debouncedFetch }) => {
-  const { salaryComponents } = useSelector((state: RootState) => state.salaryComponents);
+const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, handleClose, debouncedFetch, salaryComponents }) => {
+  const dispatch = useDispatch();
+
+  const { componentTypes } = useSelector((state: RootState) => state.componentTypes);
+
+  const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user') || '{"company_id":""}') : { company_id: '' };
 
   const [formData, setFormData] = useState({
     salarytype: '',
@@ -35,6 +41,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     calculationtype: 'Flat Amount',
     amount: 0,
     description: '',
+    company_id: company_id
   });
 
   const [errors, setErrors] = useState({
@@ -43,61 +50,9 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     amount: '',
   });
 
-  const salaryComponentTypes1 = [
-    'Basic', 'DA', 'HRA',
-    'Medical allowance',
-    'Conveyance allowance',
-    'Commission', 'Transport Allowance',
-    'Children Education Allowance',
-    'Hostel Expenditure Allowance',
-    'Travelling Allowance',
-    'Uniform Allowance', 'Daily Allowance',
-    'City Compensatory Allowance',
-    'Overtime Allowance', 'Telephone Allowance',
-    'Project Allowance', 'Food Allowance',
-    'Holiday Allowance', 'Entertainment Allowance',
-    'Custom Allowance', 'Gift Coupon',
-    'Research Allowance', 'Books and Periodicals Allowance',
-    'Shift Allowance', 'Fuel Allowance', 'Driver Allowance',
-    'Leave Travel Allowance', 'Vehicle Maintenance Allowance',
-    'Telephone And Internet Allowance',
-  ];
-
-  const salaryComponentTypes2 = [
-    'TDS',
-    'ESI',
-    'EPF',
-    'Leave',
-    'Prof.Tax',
-    'Others'
-  ];
-
-  const salaryComponentTypes3 = [
-    "Meal Coupons",
-    "Special Allowance",
-    "Tax-Free Allowances",
-    "Work-Related Benefits",
-    "Lifestyle Benefits",
-    "Wellness programs (gym memberships, yoga classes)"
-
-  ]
-
-  const salaryComponentTypes4 = [
-
-    "Club Reimbursement",
-    "Entertainment Reimbursement",
-    "Gadget Reimbursement",
-    "Books and Periodicals Reimbursement",
-    "Business Development Expense Reimbursement",
-    "Helper Reimbursement",
-    "Hostel Expenditure Reimbursement",
-    "Research Reimbursement",
-    "Uniform Reimbursement",
-    "Internet Reimbursement",
-    "Fuel Reimbursement",
-    "Driver Reimbursement",
-    "Telephone Reimbursement",
-  ]
+  useEffect(() => {
+    dispatch(fetchComponentTypes({ page: 1, limit: 10, keyword: '' }));
+  }, [dispatch]);
 
   useEffect(() => {
     if (id) {
@@ -109,6 +64,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
           calculationtype: selected.calculationtype || 'Flat Amount',
           amount: selected.amount,
           description: selected.description,
+          company_id: selected.company_id
         });
       }
     }
@@ -147,7 +103,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
     setFormData((prevState) => ({
       ...prevState,
       [name!]: value,
-      ...(name === 'salarytype' && { type: '' }),
+      ...(name === 'salarytype' && { type: '' }), // Reset type if salarytype changes
     }));
   };
 
@@ -163,36 +119,64 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data) {
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            if (data.message.includes('success')) {
+              toast.success(data.message, {
+                position: 'top-center',
+              });
+            } else {
+              toast.error('Error: ' + data.message, {
+                position: 'top-center',
+              });
+            }
+          } else {
+            toast.error('Unexpected error occurred', {
+              position: 'top-center',
+            });
+          }
+
+          if (data.message && data.message.includes('success')) {
             handleClose();
             debouncedFetch();
-            toast.success(id ? "Salary Component Successfully Updated" : "Salary Component Successfully Created");
-          } else {
-            toast.error('Unexpected error occurred');
           }
         })
-        .catch((error) => {
-          toast.error('Error: ' + error.message);
+        .catch(error => {
+          toast.error('Error: ' + error.message, {
+            position: 'top-center',
+          });
         });
     }
   };
 
-  const typeOptions = (() => {
-    switch (formData.salarytype) {
-      case 'Earnings':
-        return salaryComponentTypes1;
-      case 'Deductions':
-        return salaryComponentTypes2;
-      case 'Benefit':
-        return salaryComponentTypes3;
-      case 'Reimbursement':
-        return salaryComponentTypes4;
-      default:
-        return [];
-    }
-  })();
+  // Get type options from componentTypes array based on the selected salary type
+  const getTypeOptions = () => {
+    if (!componentTypes || !formData.salarytype) return [];
+
+    // Map salarytype to corresponding type in componentTypes
+    const typeMap = {
+      'Earnings': 'Earning',
+      'Deductions': 'Deduction',
+      'Benefits': 'Benefit',
+      'Reimbursements': 'Reimbursement'
+    };
+
+    const typeToFilter = typeMap[formData.salarytype];
+
+    if (!typeToFilter) return [];
+
+    // Filter component types by the selected type and return their names
+    return componentTypes
+      .filter(item => item.type === typeToFilter)
+      .map(item => item.name);
+  };
+
+  const getAmountLabel = () => {
+    return formData.calculationtype === 'Flat Amount'
+      ? 'Enter Amount (₹)'
+      : 'Enter Percentage (%)';
+  };
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
@@ -209,15 +193,16 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
           <FormControl fullWidth required error={!!errors.salarytype}>
             <InputLabel>Select Salary type</InputLabel>
             <Select
-              label="Select type"
+              label="Select Salary type"
               name="salarytype"
               value={formData.salarytype}
               onChange={handleChange}
             >
+              <MenuItem value="">Select Salary type</MenuItem>
               <MenuItem value="Earnings">Earnings</MenuItem>
               <MenuItem value="Deductions">Deductions</MenuItem>
-              <MenuItem value="Benefit">Benefit</MenuItem>
-              <MenuItem value="Reimbursement">Reimbursement</MenuItem>
+              <MenuItem value="Benefits">Benefits</MenuItem>
+              <MenuItem value="Reimbursements">Reimbursements</MenuItem>
             </Select>
             {errors.salarytype && <FormHelperText>{errors.salarytype}</FormHelperText>}
           </FormControl>
@@ -226,7 +211,8 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
           <FormControl fullWidth required error={!!errors.type} disabled={!formData.salarytype}>
             <InputLabel>Type</InputLabel>
             <Select name="type" value={formData.type} onChange={handleChange} label="Type">
-              {typeOptions.map((type) => (
+              <MenuItem value="">Select Type</MenuItem>
+              {getTypeOptions().map((type) => (
                 <MenuItem key={type} value={type}>
                   {type}
                 </MenuItem>
@@ -235,7 +221,6 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
           </FormControl>
         </Grid>
-
 
         <Grid item xs={12}>
           <FormControl component="fieldset">
@@ -251,7 +236,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
                 control={<Radio />}
                 label="Flat Amount"
               />
-              {formData.salarytype === 'Deductions' ? (
+              {formData.type === 'EPF' || formData.type === 'HRA' ? (
                 <FormControlLabel
                   value="Percentage of Basic"
                   control={<Radio />}
@@ -267,16 +252,10 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             </RadioGroup>
           </FormControl>
         </Grid>
-
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label={
-              formData.calculationtype === 'percentage of CTC' ||
-                formData.calculationtype === 'Percentage of Basic'
-                ? 'Percentage (%)'
-                : 'Enter Amount (₹)'
-            }
+            label={getAmountLabel()}
             name="amount"
             type="number"
             value={formData.amount}
@@ -285,7 +264,9 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             error={!!errors.amount}
             helperText={errors.amount}
           />
-        </Grid>        <Grid item xs={12}>
+        </Grid>
+
+        <Grid item xs={12}>
           <TextField
             fullWidth
             label="Description"
@@ -296,6 +277,7 @@ const AddSalaryComponentForm: React.FC<AddSalaryComponentFormProps> = ({ id, han
             rows={4}
           />
         </Grid>
+
         <Grid item xs={12}>
           <Button
             variant="contained"

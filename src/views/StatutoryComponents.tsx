@@ -54,22 +54,13 @@ const StatutoryComponents = () => {
   const { components, error } = useSelector((state: RootState) => state.statutoryComponent);
   const [selectedcomponents, setSelectedcomponents] = useState(null)
   const [showForm, setShowForm] = useState(false)
-  const [selectedKeyword, setSelectedKeyword] = useState('')
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
   const [value, setValue] = useState(0);
-  console.log('component', components);
-
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const userRole = user?.role
 
   const epfData = components?.data?.[0]?.EPF || {};
   const esiData = components?.data?.[0]?.ESI || {};
+  const ProfessionalTaxData = components?.data?.[0]?.ProfessionalTax || {};
   const bonusData = components?.data?.[0]?.Bonus || {};
   const id = components?.data?.[0]?._id; // Adjusted to access the first item in the array
-
-
-  console.log("id", id)
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -83,19 +74,6 @@ const StatutoryComponents = () => {
     return debouncedFetch.cancel
   }, [debouncedFetch])
 
-  const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
-    setSelectedKeyword(e.target.value)
-  }
-
-  const handlePageChange = (newPage: number, newPageSize: number) => {
-    setPage(newPage + 1)
-    setLimit(newPageSize)
-  }
-
-  const handlePaginationModelChange = (params: { page: number; pageSize: number }) => {
-    handlePageChange(params.page, params.pageSize)
-    debouncedFetch()
-  }
 
   const handleAddClick = () => {
     setSelectedcomponents(null)
@@ -173,91 +151,118 @@ const StatutoryComponents = () => {
         <TabPanel value={value} index={0}>
           <Box mt={2}>
             <Typography marginLeft={'5vw'} variant="h5">Employees' Provident Fund </Typography>
-            <Box display='flex' justifyContent='space-between' alignItems='center' mt={10}>
-              <Box display='flex' flexDirection={"column"} alignItems='left' mb={2}>
-                <Typography marginBottom={3}>EPF Number</Typography>
-                <Typography marginBottom={3}>Deduction Cycle</Typography>
-                <Typography marginBottom={3}>Employee Contribution Rate</Typography>
-                <Typography marginBottom={3}>Employer Contribution Rate</Typography>
-                <Typography marginBottom={3}>CTC Inclusions</Typography>
-                <Typography>Consider applicable salary</Typography>
-                <Typography>components based on LOP</Typography>
-              </Box>
-              <Box display='flex' flexDirection={"column"} alignItems='right' mb={2}>
-                <Typography marginBottom={3}>{epfData.EPFNumber}</Typography>
-                <Typography marginBottom={3}>{epfData.DeductionCycle}</Typography>
-                <Typography marginBottom={3}>{epfData.EmployeeRate}</Typography>
-                <Typography marginBottom={3}>{epfData.EmployerRate}</Typography>
-                <Typography marginBottom={3}>yes</Typography>
-                <Typography>yes</Typography>
-              </Box>
-              <Box mr={'3vw'} >
-                <Typography marginBottom={3} textAlign={'center'}>Sample EPF Calculation</Typography>
-                <Typography>Let's assume the PF wage is ₹ 20,000.</Typography>
-                <Typography> The breakup of contribution will be:</Typography>
-                <Typography variant="h6" mt={'5vh'}>Employee's Contribution</Typography>
-                <Box mt={'2vh'} display='flex' justifyContent={'space-between'}>
-                  <Typography>
-                    EPF (12% of 20000)</Typography>
-                  <Typography>2400</Typography>
+            {Array.isArray(components?.data) && components.data.length > 0 &&
+              <><Box display='flex' justifyContent='space-between' alignItems='center' mt={10}>
+                <Box display='flex' flexDirection={"column"} alignItems='left' mb={2}>
+                  <Typography marginBottom={3}>EPF Number</Typography>
+                  <Typography marginBottom={3}>Deduction Cycle</Typography>
+                  <Typography marginBottom={3}>Employee Contribution Rate</Typography>
+                  <Typography marginBottom={3}>Employer Contribution Rate</Typography>
+                  <Typography marginBottom={3}>CTC Inclusions</Typography>
+                  <Typography>Consider applicable salary</Typography>
+                  <Typography>components based on LOP</Typography>
                 </Box>
-                <Typography variant="h6" mt={'5vh'}>Employer's Contribution</Typography>
-                <Box mt={'2vh'} display='flex' justifyContent={'space-between'}>
-                  <Typography>
-                    EPF (8.33%of 20000)</Typography>
-                  <Typography>1250</Typography>
+                <Box display='flex' flexDirection={"column"} alignItems='right' mb={2}>
+                  <Typography marginBottom={3}>{epfData.EPFNumber}</Typography>
+                  <Typography marginBottom={3}>{epfData.DeductionCycle}</Typography>
+                  <Typography marginBottom={3}>{epfData.EmployeeRate} %</Typography>
+                  <Typography marginBottom={3}>{epfData.EmployerRate} %</Typography>
+                  <Typography marginBottom={3}>{epfData.IncludedInCTC}</Typography>
+                  <Typography>{epfData.isPFWageLessThan15K}</Typography>
                 </Box>
-                <Box mt={'5vh'} display='flex' justifyContent={'space-between'}>
-                  <Typography variant="h6">Total</Typography>
-                  <Typography>3650</Typography>
-                </Box>
+                <Box mr={'3vw'}>
+                  <Typography marginBottom={3} textAlign={'center'}>Sample EPF Calculation</Typography>
+                  <Typography>Let's assume the PF wage is ₹ 20,000.</Typography>
+                  <Typography> The breakup of contribution will be:</Typography>
+                  <Typography variant="h6" mt={'5vh'}>Employee's Contribution</Typography>
+                  <Box mt={'2vh'} display='flex' justifyContent={'space-between'}>
+                    <Typography>
+                      EPF (12% of 20000)</Typography>
+                    <Typography>2400</Typography>
+                  </Box>
+                  <Typography variant="h6" mt={'5vh'}>Employer's Contribution</Typography>
+                  <Box mt={'2vh'} display='flex' justifyContent={'space-between'}>
+                    <Typography>
+                      EPF (8.33%of 20000)</Typography>
+                    <Typography>1250</Typography>
+                  </Box>
+                  <Box mt={'5vh'} display='flex' justifyContent={'space-between'}>
+                    <Typography variant="h6">Total</Typography>
+                    <Typography>3650</Typography>
+                  </Box>
 
+                </Box>
               </Box>
-            </Box>
-            <Button
-              sx={{ mt: '5vh' }}
-              variant="contained"
-              color="primary"
-              onClick={() => handleEditClick(id)}
-            >
-              Edit
-            </Button>
-
+                <Button
+                  sx={{ mt: '5vh' }}
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleEditClick(id)}
+                >
+                  Edit
+                </Button>
+              </>
+            }
           </Box>
         </TabPanel>
         <TabPanel value={value} index={1}>
           <Box mt={2}>
             <Typography marginLeft={'5vw'} variant="h5">Employees' State Insurance </Typography>
-            <Box display='flex' justifyContent='space-between' alignItems='center' mt={10}>
-              <Box marginLeft={'5vw'} display='flex' flexDirection={"column"} alignItems='left' mb={2}>
-                <Typography marginBottom={3}>ESI Number</Typography>
-                <Typography marginBottom={3}>Deduction Cycle</Typography>
-                <Typography marginBottom={3}>Employee Contribution Rate</Typography>
-                <Typography>Employer Contribution Rate</Typography>
-              </Box>
-              <Box marginRight={'30vw'} display='flex' flexDirection={"column"} alignItems='right' mb={2}>
-                <Typography marginBottom={3}>{esiData.ESINumber}</Typography>
-                <Typography marginBottom={3}>{esiData.DeductionCycle}</Typography>
-                <Typography marginBottom={3}>{esiData.EmployeeRate}</Typography>
-                <Typography>{esiData.EmployerRate}</Typography>
-              </Box>
-            </Box>
-            <Button
-              sx={{ marginLeft: '5vw', mt: '5vh' }}
-              variant="contained"
-              color="primary"
-              onClick={() => handleEditClick(id)}
-            >
-              Edit
-            </Button>
+            {Array.isArray(components?.data) && components.data.length > 0 &&
+              <>
+                <Box display='flex' justifyContent='space-between' alignItems='center' mt={10}>
+                  <Box marginLeft={'5vw'} display='flex' flexDirection={"column"} alignItems='left' mb={2}>
+                    <Typography marginBottom={3}>ESI Number</Typography>
+                    <Typography marginBottom={3}>Deduction Cycle</Typography>
+                    <Typography marginBottom={3}>Employee Contribution Rate</Typography>
+                    <Typography>Employer Contribution Rate</Typography>
+                  </Box>
+                  <Box marginRight={'30vw'} display='flex' flexDirection={"column"} alignItems='right' mb={2}>
+                    <Typography marginBottom={3}>{esiData.ESINumber}</Typography>
+                    <Typography marginBottom={3}>{esiData.DeductionCycle}</Typography>
+                    <Typography marginBottom={3}>{esiData.EmployeeRate}</Typography>
+                    <Typography>{esiData.EmployerRate}</Typography>
+                  </Box>
+                </Box>
+                <Button
+                  sx={{ marginLeft: '5vw', mt: '5vh' }}
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleEditClick(id)}
+                >
+                  Edit
+                </Button>
+              </>
+            }
           </Box>
 
         </TabPanel>
         <TabPanel value={value} index={2}>
-          <Typography>Professional Tax</Typography>
-          <Typography>This tax is levied on an employee’s income by the State Government. Tax slabs differ in each state.</Typography>
-          <Box>
-            <Typography></Typography>
+          <Box mt={2}>
+            <Typography marginLeft={'5vw'} variant="h5">Professional Tax</Typography>
+            {Array.isArray(components?.data) && components.data.length > 0 &&
+              <><Box display='flex' justifyContent='space-between' alignItems='center' mt={10}>
+                <Box marginLeft={'5vw'} display='flex' flexDirection={"column"} alignItems='left' mb={2}>
+                  <Typography marginBottom={3}>Professional Tax Number</Typography>
+                  <Typography marginBottom={3}>Deduction Cycle</Typography>
+                  <Typography marginBottom={3}>Employee Deduction Amount</Typography>
+                </Box>
+                <Box marginRight={'30vw'} display='flex' flexDirection={"column"} alignItems='right' mb={2}>
+                  <Typography marginBottom={3}>{ProfessionalTaxData.ProfTaxNumber}</Typography>
+                  <Typography marginBottom={3}>{ProfessionalTaxData.DeductionCycle}</Typography>
+                  <Typography marginBottom={3}>{ProfessionalTaxData.EmployeeDeduction}</Typography>
+                </Box>
+              </Box>
+                <Button
+                  sx={{ mt: '5vh' }}
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleEditClick(id)}
+                >
+                  Edit
+                </Button>
+              </>
+            }
           </Box>
         </TabPanel>
         <TabPanel value={value} index={3}>

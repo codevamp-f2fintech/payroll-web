@@ -5,6 +5,8 @@ export interface EPF {
   DeductionCycle: string;
   EmployeeRate: string;
   EmployerRate: string;
+  IncludedInCTC: string,
+  isPFWageLessThan15K: string,
 }
 
 export interface ESI {
@@ -46,6 +48,7 @@ export const fetchStatutoryComponents = createAsyncThunk<
 >("statutoryComponents/fetchStatutoryComponents", async () => {
   try {
     let token: string | null = null;
+    const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
 
     if (typeof window !== "undefined") {
       token = localStorage?.getItem('token');
@@ -56,7 +59,7 @@ export const fetchStatutoryComponents = createAsyncThunk<
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token} ${company_id}`,
           'Content-Type': 'application/json',
         },
       }
@@ -67,7 +70,6 @@ export const fetchStatutoryComponents = createAsyncThunk<
     }
 
     const data = await response.json();
-    console.log("data", data)
     return data; // Assuming the response is an array of StatutoryComponent
   } catch (error) {
     console.error('Fetch error:', error);
@@ -88,7 +90,6 @@ const statutoryComponentSlice = createSlice({
       .addCase(fetchStatutoryComponents.fulfilled, (state, action) => {
         state.loading = false;
         state.components = action.payload;
-        console.log('component', action.payload)
       })
       .addCase(fetchStatutoryComponents.rejected, (state, action) => {
         state.loading = false;

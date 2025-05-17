@@ -32,7 +32,20 @@ const initialState: OrganizationState = {
 export const fetchOrganizations = createAsyncThunk<Organization[]>(
   "organization/fetchOrganizations",
   async () => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/organization-profile/get`);
+    let token: string | null = null;
+    const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
+
+    // Retrieve token from localStorage if running in the browser
+    if (typeof window !== "undefined") {
+      token = localStorage?.getItem("token");
+    }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/organization-profile/get`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token} ${company_id}`,
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");

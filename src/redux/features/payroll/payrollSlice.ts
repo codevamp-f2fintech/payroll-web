@@ -1,39 +1,34 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+export interface Earnings {
+  type: string;
+  monthlyAmount: number;
+  yearlyAmount: number;
+}
+
+export interface Deductions {
+  type: string;
+  monthlyAmount: number;
+  yearlyAmount: number;
+}
+
 export interface Payroll {
-  employee: {
-    _id: string;
-    first_name: string;
-    last_name: string;
-    code: string;
-    designation: string;
-    email: string;
-    image: string;
-  };
-  salaryTemplate: {
-    _id: string;
-    name: string;
-    baseSalary: number;
-    earningTypes: {
-      _id: string;
-      salarytype: string;
-      type: string;
-      amount: number;
-      description: string;
-    }[];
-    deductionTypes: {
-      _id: string;
-      salarytype: string;
-      type: string;
-      amount: number;
-      description: string;
-    }[];
-    description: string;
-  };
-  status: string;
-  processedBy: string;
-  netSalary: number;
+  _id: string;
+  employeeId: string;
+  salaryTemplate: string;
+  payPeriod?: string;
+  payDate?: string;
+  status: 'pending' | 'processed' | 'paid';
+  processedBy?: string;
+  grossEarnings?: number;
+  totalDeductions?: number;
+  netSalary?: number;
+  earnings: Earnings[];
+  deductions: Deductions[];
+  company: string,
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PayrollState {
@@ -42,6 +37,7 @@ interface PayrollState {
   error: string | null;
   total: number;
   filteredByEmployee: Payroll[];
+  employeePayrollsByYear: Payroll[];
 }
 
 const initialState: PayrollState = {
@@ -50,6 +46,7 @@ const initialState: PayrollState = {
   error: null,
   total: 0,
   filteredByEmployee: [],
+  employeePayrollsByYear: [],
 };
 
 export const fetchPayrolls = createAsyncThunk<{
@@ -66,9 +63,23 @@ export const fetchPayrolls = createAsyncThunk<{
     if (keyword) queryParams.append('keyword', encodeURIComponent(keyword));
     if (month) queryParams.append('month', month.toString());
     if (year) queryParams.append('year', year.toString());
+    let token: string | null = null;
+    const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
+
+    if (typeof window !== "undefined") {
+      token = localStorage?.getItem("token");
+    }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/get?${queryParams.toString()}`
+      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/get?${queryParams.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token} ${company_id}`,
+          'Content-Type': 'application/json',
+        },
+      }
+
     );
 
     if (!response.ok) {
@@ -101,6 +112,36 @@ export const fetchPayrollsByEmployeeId = createAsyncThunk<
 
     if (!response.ok) {
       throw new Error('Failed to fetch payrolls by employee ID');
+    }
+
+    return (await response.json()) as { data: Payroll[]; total: number };
+  }
+);
+
+export const fetchPayrollByEmployeeIdAndYear = createAsyncThunk<{
+  data: Payroll[];
+  total: number;
+}, { employeeId: string; year: number; keyword?: string; page?: number; limit?: number }>(
+  'payroll/fetchPayrollByEmployeeIdAndYear',
+  async ({ employeeId, year, keyword, page = 1, limit = 10 }: { employeeId: string; year: number; keyword: string; page: number; limit: number }) => {
+    if (!employeeId) {
+      throw new Error('Employee ID is required');
+    }
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page.toString());
+    if (keyword) queryParams.append('keyword', encodeURIComponent(keyword));
+    queryParams.append('limit', limit.toString());
+    queryParams.append('year', year.toString());
+
+    // Call the API
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/payroll/employee/${employeeId}/year/${year}?${queryParams.toString()}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch payroll by employee ID and year');
     }
 
     return (await response.json()) as { data: Payroll[]; total: number };
@@ -145,7 +186,22 @@ const payrollSlice = createSlice({
       .addCase(fetchPayrollsByEmployeeId.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Something went wrong";
+      })
+
+      .addCase(fetchPayrollByEmployeeIdAndYear.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPayrollByEmployeeIdAndYear.fulfilled, (state, action) => {
+        state.employeePayrollsByYear = action.payload.data; // Populate the new payroll state
+        state.total = action.payload.total;
+        state.loading = false;
+      })
+      .addCase(fetchPayrollByEmployeeIdAndYear.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Something went wrong';
       });
+
   }
 });
 

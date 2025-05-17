@@ -201,33 +201,33 @@ const EmployeeAttendanceStatus: React.FC = () => {
     fetchEmployeesCount();
   }, []);
 
-  useEffect(() => {
-    if (!attendanceCountsByLocation.length) {
-      const fetchAttendanceCounts = async () => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_APP_URL}/attendence/location-counts`,
-            {
-              method: 'GET',
-            }
-          );
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          const data = await response.json();
-          setAttendanceCountsByLocation(data);
-        } catch (error) {
-          console.error('Error fetching attendance counts:', error);
-        }
-      };
-      fetchAttendanceCounts();
-    }
-  }, [attendanceCountsByLocation]);
+  // useEffect(() => {
+  //   if (!attendanceCountsByLocation.length) {
+  //     const fetchAttendanceCounts = async () => {
+  //       try {
+  //         const response = await fetch(
+  //           `${process.env.NEXT_PUBLIC_APP_URL}/attendance/location-counts`,
+  //           {
+  //             method: 'GET',
+  //           }
+  //         );
+  //         if (!response.ok) {
+  //           throw new Error('Network response was not ok');
+  //         }
+  //         const data = await response.json();
+  //         setAttendanceCountsByLocation(data);
+  //       } catch (error) {
+  //         console.error('Error fetching attendance counts:', error);
+  //       }
+  //     };
+  //     fetchAttendanceCounts();
+  //   }
+  // }, [attendanceCountsByLocation]);
 
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ p: 3, bgcolor: 'background.default', minHeight: '100vh' }}>
+      <Box sx={{ bgcolor: 'background.default', minHeight: '15vh' }}>
         <Paper elevation={3} sx={{ p: 3, mb: 1 }}>
           <Grid container spacing={2} alignItems="center" justifyContent="space-between">
             <Grid item>
@@ -270,14 +270,12 @@ const EmployeeAttendanceStatus: React.FC = () => {
                       {data._id}
                     </Typography>
                   </Box>
-                  {/* Display Today's Total Employees Count */}
                   <Typography variant="subtitle1" color="text.secondary">
                     Today's Count: {data.totalEmployeesToday}
                   </Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
                 <Grid container spacing={2}>
-                  {/* Iterate over each status */}
                   {Object.entries(data).map(([status, count]) => {
                     if (status === 'totalEmployeesToday' || status === '_id') return null;
                     return (
@@ -296,7 +294,7 @@ const EmployeeAttendanceStatus: React.FC = () => {
             </Grid>
           ))}
         </Grid>}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        {/* <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
           <DialogTitle>{dialogTitle} Employees</DialogTitle>
           <DialogContent>
             <ul className="divide-y divide-gray-200">
@@ -331,8 +329,7 @@ const EmployeeAttendanceStatus: React.FC = () => {
                 ))}
             </ul>
           </DialogContent>
-        </Dialog>
-
+        </Dialog> */}
       </Box>
     </ThemeProvider>
   );

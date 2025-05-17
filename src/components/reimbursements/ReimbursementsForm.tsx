@@ -16,14 +16,21 @@ import { Upload } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import { toast } from 'react-toastify';
 
-const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) => {
+const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements, userRole, employeeId }) => {
+  const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user')) : {};
+
   const [formData, setFormData] = useState({
     reimbursements: '',
     amount: '',
     date: '',
     proof: null,
     description: '',
+    status: 'pending',
+    company_id: company_id
+
+
   });
+  const [preview, setPreview] = useState(null);
 
   const [errors, setErrors] = useState({
     reimbursements: '',
@@ -31,6 +38,7 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
     date: '',
     proof: '',
     description: '',
+    status: '',
   });
 
   const reimbursementTypes = [
@@ -56,9 +64,10 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
           date: selected.date,
           proof: selected.proof,
           description: selected.description,
-
-
+          status: selected.status || 'pending',
+          company_id: selected.company_id,
         });
+        setPreview(selected.proof)
       }
     }
   }, [id, reimbursements]);
@@ -116,16 +125,22 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        proof: file,
-      }));
+      setFormData((prev) => ({ ...prev, proof: file }));
+
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
     }
   };
-
   const handleSubmit = () => {
     if (validateForm()) {
       const method = id ? 'PUT' : 'POST';
@@ -138,6 +153,13 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
       formDataToSend.append('amount', formData.amount);
       formDataToSend.append('date', formData.date);
       formDataToSend.append('description', formData.description);
+      formDataToSend.append('status', formData.status);
+      if (!id) {
+        formDataToSend.append('company_id', formData.company_id);
+      }
+      if (!id) {
+        formDataToSend.append('employeeId', employeeId);
+      }
       if (formData.proof) {
         formDataToSend.append('file', formData.proof);
       }
@@ -214,41 +236,42 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
             helperText={errors.date}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            startIcon={<Upload />}
-          >
-            {formData.proof ? formData.proof.name : 'Upload Proof Document'}
-            <input
-              type="file"
-              hidden
-              accept="image/*,.pdf"
-              onChange={handleFileChange}
-            />
-          </Button>
-          {errors.proof && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-              {errors.proof}
-            </Typography>
-          )}
-          {formData.proof && (
-            <>
-              {formData.proof.type.startsWith('image/') && (
-                <Box mt={2} textAlign="center">
-                  <img
-                    src={formData.proof.preview}
-                    alt="Preview"
-                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
-                  />
-                </Box>
-              )}
-            </>
-          )}
-        </Grid>
 
+        {userRole === '1' ? (
+          <>
+            <Grid item xs={12} md={6} mt={2}>
+              <FormControl fullWidth error={!!errors.status}>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  name='status'
+                  label="Status"
+                  value={formData.status}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                >
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
+                </Select>
+                {errors.status && (
+                  <FormHelperText error>{errors.status}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+          </>
+        ) : (
+          <>
+            <Grid item xs={12} md={6} mt={3}>
+              <FormControl fullWidth disabled>
+                <InputLabel>Status</InputLabel>
+                <Select value={formData.status} disabled label="Status">
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </>
+        )}
         <Grid item xs={12}>
           <TextField
             label="Description"
@@ -264,6 +287,42 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
         </Grid>
 
         <Grid item xs={12}>
+          <Box mt={4}>
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+              startIcon={<Upload />}
+              sx={{ height: '8vh' }}
+            >
+              {formData.proof ? formData.proof.name : 'Upload Proof Document'}
+              <input
+                type="file"
+                hidden
+                accept="image/*,.pdf"
+                onChange={handleFileChange}
+              />
+            </Button>
+            {errors.proof && (
+              <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                {errors.proof}
+              </Typography>
+            )}
+            {preview && (
+              <>
+                <Box mt={2} textAlign="center">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                  />
+                </Box>
+              </>
+            )}
+          </Box>
+        </Grid>
+
+        <Grid item xs={12}>
           <Button
             fullWidth
             type="submit"
@@ -271,7 +330,7 @@ const ReimbursementForm = ({ id, handleClose, debouncedFetch, reimbursements }) 
             color="primary"
             onClick={handleSubmit}
           >
-            Submit Reimbursement
+            {id ? 'Update' : 'Add'}
           </Button>
         </Grid>
       </Grid>

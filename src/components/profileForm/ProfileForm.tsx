@@ -38,11 +38,7 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
   const [isCompressing, setIsCompressing] = useState(false);
   const [formData, setFormData] = useState({
     employeeId: '',
-    skills: [],
     bankDetails: { bankName: '', accountNumber: '', ifscCode: '', panCardNumber: '', panCardImage: null },
-    addressDetails: { permanentAddress: '', currentAddress: '', aadhaarCardNumber: '', aadhaarFrontImage: null, aadhaarBackImage: null },
-    academics: [{ level: '10th', institution: '', fromYear: '', toYear: '', details: '' }],
-    pastExperience: [{ companyName: '', fromYear: '', toYear: '', lastCtc: '', designation: '', referenceName: '', referenceContact: '' }],
     verify: false
   });
 
@@ -77,19 +73,19 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
   };
 
 
-  const addAcademic = () => {
-    setFormData(prevData => ({
-      ...prevData,
-      academics: [...prevData.academics, { level: '', institution: '', fromYear: '', toYear: '', details: '' }],
-    }));
-  };
+  // const addAcademic = () => {
+  //   setFormData(prevData => ({
+  //     ...prevData,
+  //     academics: [...prevData.academics, { level: '', institution: '', fromYear: '', toYear: '', details: '' }],
+  //   }));
+  // };
 
-  const removeAcademic = (index) => {
-    setFormData(prevData => ({
-      ...prevData,
-      academics: prevData.academics.filter((_, i) => i !== index),
-    }));
-  };
+  // const removeAcademic = (index) => {
+  //   setFormData(prevData => ({
+  //     ...prevData,
+  //     academics: prevData.academics.filter((_, i) => i !== index),
+  //   }));
+  // };
 
   const handleFileChange = async (section, field, file) => {
     if (file) {
@@ -186,7 +182,6 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
 
     setFormData({
       employeeId: data.employeeId || '',
-      skills: data.skills || [],
       bankDetails: {
         bankName: data.bankDetails?.bankName || '',
         accountNumber: data.bankDetails?.accountNumber || '',
@@ -194,19 +189,6 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
         panCardNumber: data.bankDetails?.panCardNumber || '',
         panCardImage: data.bankDetails?.panCardImageUrl, // URL from AWS
       },
-      addressDetails: {
-        permanentAddress: data.addressDetails?.permanentAddress || '',
-        currentAddress: data.addressDetails?.currentAddress || '',
-        aadhaarCardNumber: data.addressDetails?.aadhaarCardNumber || '',
-        aadhaarFrontImage: data.addressDetails?.aadhaarFrontImageUrl, // URL from AWS
-        aadhaarBackImage: data.addressDetails?.aadhaarBackImageUrl, // URL from AWS
-      },
-      academics: Array.isArray(data.academics)
-        ? data.academics
-        : [
-          { level: '10th', institution: '', fromYear: '', toYear: '', details: '' }
-        ],
-      pastExperience: data.pastExperience.length > 0 ? data.pastExperience : [{ companyName: '', fromYear: '', toYear: '', lastCtc: '', designation: '', referenceName: '', referenceContact: '' }],
       verify: data.verify
     })
   };
@@ -226,40 +208,15 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
 
     appendData('employeeId', formData.employeeId);
 
-    // Append all fields
-    appendData('skills', formData.skills.join(',')); // join skills array as a comma-separated string
-
     Object.entries(formData.bankDetails).forEach(([key, value]) => {
       appendData(`bankDetails_${key}`, value);
     });
 
-    Object.entries(formData.addressDetails).forEach(([key, value]) => {
-      appendData(`addressDetails_${key}`, value);
-    });
 
-    formData.academics.forEach((academic, index) => {
-      appendData(`academics_${index}_level`, academic.level);
-      appendData(`academics_${index}_institution`, academic.institution);
-      appendData(`academics_${index}_fromYear`, academic.fromYear);
-      appendData(`academics_${index}_toYear`, academic.toYear);
-      appendData(`academics_${index}_details`, academic.details);
-    });
-
-    formData.pastExperience.forEach((exp, index) => {
-      Object.entries(exp).forEach(([key, value]) => {
-        appendData(`pastExperience_${index}_${key}`, value);
-      });
-    });
 
     // Only append files if they are selected
     if (formData.panCardImage) {
       appendData('panCardImage', formData.panCardImage);
-    }
-    if (formData.aadhaarFrontImage) {
-      appendData('aadhaarFrontImage', formData.aadhaarFrontImage);
-    }
-    if (formData.aadhaarBackImage) {
-      appendData('aadhaarBackImage', formData.aadhaarBackImage);
     }
 
     appendData('verify', formData.verify);
@@ -345,34 +302,34 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
 
 
   const tabContent = [
-    {
-      label: 'Skills',
-      content: (
-        <Autocomplete
-          multiple
-          freeSolo
-          options={[]}
-          value={formData.skills}
-          onChange={(event, newValue) => setFormData(prev => ({ ...prev, skills: newValue }))}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => (
-              <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-            ))
-          }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="outlined"
-              label="Skills"
-              placeholder="Press Enter to Add more skills"
-              fullWidth
-              disabled={isFormDisabled}
-            />
-          )}
-          disabled={isFormDisabled}
-        />
-      ),
-    },
+    // {
+    //   label: 'Skills',
+    //   content: (
+    //     <Autocomplete
+    //       multiple
+    //       freeSolo
+    //       options={[]}
+    //       value={formData.skills}
+    //       onChange={(event, newValue) => setFormData(prev => ({ ...prev, skills: newValue }))}
+    //       renderTags={(value, getTagProps) =>
+    //         value.map((option, index) => (
+    //           <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+    //         ))
+    //       }
+    //       renderInput={(params) => (
+    //         <TextField
+    //           {...params}
+    //           variant="outlined"
+    //           label="Skills"
+    //           placeholder="Press Enter to Add more skills"
+    //           fullWidth
+    //           disabled={isFormDisabled}
+    //         />
+    //       )}
+    //       disabled={isFormDisabled}
+    //     />
+    //   ),
+    // },
     {
       label: 'Bank Details',
       content: (
@@ -419,228 +376,8 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
 
       ),
     },
-    {
-      label: 'Address',
-      content: (
-        <>
-          <TextField
-            label="Permanent Address"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
-            value={formData.addressDetails.permanentAddress}
-            onChange={(e) => handleInputChange('addressDetails', '', 'permanentAddress', e.target.value)}
-            disabled={isFormDisabled}
-          />
-          <TextField
-            label="Current Address"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
-            value={formData.addressDetails.currentAddress}
-            onChange={(e) => handleInputChange('addressDetails', '', 'currentAddress', e.target.value)}
-            disabled={isFormDisabled}
-          />
 
-          <TextField
-            label="Aadhaar Card Number"
-            fullWidth
-            margin="normal"
-            value={formData.addressDetails.aadhaarCardNumber}
-            onChange={(e) => handleInputChange('addressDetails', '', 'aadhaarCardNumber', e.target.value)}
-            disabled={isFormDisabled}
-          />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2">Aadhaar Card Front Image</Typography>
-            <input
-              type="file"
-              onChange={(e) => handleFileChange('addressDetails', 'aadhaarFrontImage', e.target.files[0])}
-              disabled={isFormDisabled}
-            />
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2">Aadhaar Card Back Image</Typography>
-            <input
-              type="file"
-              onChange={(e) => handleFileChange('addressDetails', 'aadhaarBackImage', e.target.files[0])}
-              disabled={isFormDisabled}
-            />
-          </Box>
-        </>
-      ),
-    },
-    {
-      label: 'Academics',
-      content: (
-        <>
-          {formData.academics.map((academic, index) => (
-            <Box key={index} sx={{ border: '1px solid #ddd', padding: 2, marginBottom: 2, borderRadius: 2 }}>
-              <TextField
-                label="Education Level"
-                fullWidth
-                margin="normal"
-                value={academic.level}
-                onChange={(e) => handleInputChange('academics', index, 'level', e.target.value)}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Institution"
-                fullWidth
-                margin="normal"
-                value={academic.institution}
-                onChange={(e) => handleInputChange('academics', index, 'institution', e.target.value)}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="From Year"
-                fullWidth
-                margin="normal"
-                value={academic.fromYear}
-                onChange={(e) => handleInputChange('academics', index, 'fromYear', e.target.value)}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="To Year"
-                fullWidth
-                margin="normal"
-                value={academic.toYear}
-                onChange={(e) => handleInputChange('academics', index, 'toYear', e.target.value)}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Details"
-                fullWidth
-                margin="normal"
-                multiline
-                rows={2}
-                value={academic.details}
-                onChange={(e) => handleInputChange('academics', index, 'details', e.target.value)}
-                disabled={isFormDisabled}
-              />
-              <Button disabled={isFormDisabled} variant="outlined" color="secondary" onClick={() => removeAcademic(index)}>
-                Remove
-              </Button>
-            </Box>
-          ))}
-          <Button disabled={isFormDisabled} variant="contained" color="primary" onClick={addAcademic}>
-            Add More Education
-          </Button>
-        </>
-      ),
-    },
-    {
-      label: 'Experience',
-      content: (
-        <>
-          {formData.pastExperience.map((exp, index) => (
-            <Box key={index} sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Experience {index + 1}</Typography>
-              <TextField
-                label="Company Name"
-                fullWidth
-                margin="normal"
-                value={exp.companyName}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].companyName = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="From Year"
-                fullWidth
-                margin="normal"
-                value={exp.fromYear}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].fromYear = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="To Year"
-                fullWidth
-                margin="normal"
-                value={exp.toYear}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].toYear = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Last CTC in (Rupees)"
-                type='number'
-                fullWidth
-                margin="normal"
-                value={exp.lastCtc}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].lastCtc = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Designation"
-                fullWidth
-                margin="normal"
-                value={exp.designation}
-                onChange={(e) => {
-                  const capitalizedDesignation = e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].designation = capitalizedDesignation;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Reference Name"
-                fullWidth
-                margin="normal"
-                value={exp.referenceName}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].referenceName = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-              <TextField
-                label="Reference Contact"
-                fullWidth
-                margin="normal"
-                value={exp.referenceContact}
-                onChange={(e) => {
-                  const newExperience = [...formData.pastExperience];
-                  newExperience[index].referenceContact = e.target.value;
-                  setFormData(prev => ({ ...prev, pastExperience: newExperience }));
-                }}
-                disabled={isFormDisabled}
-              />
-            </Box>
-          ))}
-          <Button
-            variant="outlined"
-            onClick={() => setFormData(prev => ({
-              ...prev,
-              pastExperience: [
-                ...prev.pastExperience,
-                { companyName: '', fromYear: '', toYear: '', lastCtc: '', designation: '', referenceName: '', referenceContact: '' }
-              ]
-            }))}
-            disabled={isFormDisabled}
-          >
-            Add More Experience
-          </Button>
-        </>
-      ),
-    },
+
     {
       label: logedUser.id === profileId ? 'Preview & Submit' : 'Preview',
       content: (
@@ -648,10 +385,6 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
           <h4 className="text-center mb-6 text-2xl font-bold text-gray-800">Preview</h4>
 
           <div className="space-y-6">
-            <section>
-              <SectionTitle iconClass="ri-user-3-line" title="Skills" />
-              <p className="text-gray-700">{formData.skills.join(', ') || 'No skills added'}</p>
-            </section>
 
             <hr className="border-t border-gray-200" />
 
@@ -680,7 +413,7 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
 
             <hr className="border-t border-gray-200" />
 
-            <section>
+            {/* <section>
               <SectionTitle iconClass="ri-map-pin-2-line" title="Address Details" />
               <p className="text-gray-700">Permanent Address: {formData.addressDetails.permanentAddress || 'N/A'}</p>
               <p className="text-gray-700">Current Address: {formData.addressDetails.currentAddress || 'N/A'}</p>
@@ -757,7 +490,7 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
               ) : (
                 <p className="text-gray-700">No past experience added</p>
               )}
-            </section>
+            </section> */}
           </div>
 
           {(logedUser.id === profileId || userRole === '1') && (
@@ -778,8 +511,6 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
   const calculateFilledTabs = () => {
     let filledCount = 0;
 
-    // Skills tab (up to 1 point)
-    filledCount += Math.min(formData.skills.length, 3) / 3;
 
     // Bank Details tab (up to 1 point)
     if (formData.bankDetails.bankName) filledCount += 1 / 5;
@@ -789,27 +520,27 @@ const ProfileForm = ({ profileId, logedUser, setCalculateFilledTabsCount, setChe
     if (formData.bankDetails.panCardImage) filledCount += 1 / 5;
 
     // Address Details tab (up to 1 point)
-    if (formData.addressDetails.permanentAddress) filledCount += 1 / 5;
-    if (formData.addressDetails.currentAddress) filledCount += 1 / 5;
-    if (formData.addressDetails.aadhaarCardNumber) filledCount += 1 / 5;
-    if (formData.addressDetails.aadhaarFrontImage) filledCount += 1 / 5
-    if (formData.addressDetails.aadhaarBackImage) filledCount += 1 / 5
+    // if (formData.addressDetails.permanentAddress) filledCount += 1 / 5;
+    // if (formData.addressDetails.currentAddress) filledCount += 1 / 5;
+    // if (formData.addressDetails.aadhaarCardNumber) filledCount += 1 / 5;
+    // if (formData.addressDetails.aadhaarFrontImage) filledCount += 1 / 5
+    // if (formData.addressDetails.aadhaarBackImage) filledCount += 1 / 5
 
-    // Academics tab (up to 1 point)
-    if (formData.academics.some(aca => aca.level)) filledCount += 1 / 5;
-    if (formData.academics.some(aca => aca.institution)) filledCount += 1 / 5;
-    if (formData.academics.some(aca => aca.fromYear)) filledCount += 1 / 5;
-    if (formData.academics.some(aca => aca.toYear)) filledCount += 1 / 5;
-    if (formData.academics.some(aca => aca.details)) filledCount += 1 / 5;
+    // // Academics tab (up to 1 point)
+    // if (formData.academics.some(aca => aca.level)) filledCount += 1 / 5;
+    // if (formData.academics.some(aca => aca.institution)) filledCount += 1 / 5;
+    // if (formData.academics.some(aca => aca.fromYear)) filledCount += 1 / 5;
+    // if (formData.academics.some(aca => aca.toYear)) filledCount += 1 / 5;
+    // if (formData.academics.some(aca => aca.details)) filledCount += 1 / 5;
 
     // Past Experience tab (up to 1 point)
-    if (formData.pastExperience.some(exp => exp.companyName)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.fromYear)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.toYear)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.lastCtc)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.designation)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.referenceContact)) filledCount += 1 / 7;
-    if (formData.pastExperience.some(exp => exp.referenceName)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.companyName)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.fromYear)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.toYear)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.lastCtc)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.designation)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.referenceContact)) filledCount += 1 / 7;
+    // if (formData.pastExperience.some(exp => exp.referenceName)) filledCount += 1 / 7;
 
 
     return (filledCount / (tabContent.length - 1)) * 100;

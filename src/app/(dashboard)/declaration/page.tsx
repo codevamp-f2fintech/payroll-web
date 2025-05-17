@@ -1,4 +1,4 @@
-import MyDeclaration from "@/views/MYdeclration";
+import MyDeclaration from "@/views/MyDeclaration";
 const TaxDeclarationpage = () => {
   return (
     <>

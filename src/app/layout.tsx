@@ -9,6 +9,7 @@ import type { ChildrenType } from '@core/types'
 import '@/app/globals.css'
 
 import ReduxProvider from '@/redux/provider';
+import { PayslipProvider } from '@/utility/payslipGenerater/PayslipGenerater';
 
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
@@ -37,7 +38,9 @@ const RootLayout = ({ children }: ChildrenType) => {
             speed={300}
             shadow="0 0 10px #2299DD,0 0 5px #2299DD"
           />
-          {children}
+          <PayslipProvider>
+            {children}
+          </PayslipProvider>
         </ReduxProvider>
       </body>
     </html>

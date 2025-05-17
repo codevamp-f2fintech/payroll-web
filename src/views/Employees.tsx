@@ -171,16 +171,17 @@ export default function EmployeeGrid() {
             </Typography>
           </Box>
           <Box display='flex' alignItems='center'>
-            {userRole === '1' && <Button
-              style={{ borderRadius: 50, backgroundColor: '#ff902f' }}
-              variant='contained'
-              color='warning'
-              startIcon={<AddIcon />}
-              onClick={handleAddEmployeeClick}
-            >
-              Add Employee
-            </Button>
-            }
+            {Number(userRole) <= 1 && (
+              <Button
+                style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
+                variant='contained'
+                color='warning'
+                startIcon={<AddIcon />}
+                onClick={handleAddEmployeeClick}
+              >
+                Add Employee
+              </Button>
+            )}
           </Box>
         </Box>
         <Grid container spacing={6} alignItems='center' mb={2}>
@@ -194,7 +195,7 @@ export default function EmployeeGrid() {
             />
           </Grid>
         </Grid>
-        <Grid container spacing={6}>
+        <Grid container spacing={6} sx={{ minHeight: '300px' }}>
           {error ? (
             <Typography>Error: {error}</Typography>
           ) : (

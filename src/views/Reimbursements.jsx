@@ -26,7 +26,6 @@ import { fetchReimbursements } from '@/redux/features/reimbursement/reimbursemen
 const ReimbursementsComponent = () => {
   const dispatch = useDispatch()
   const { reimbursements, loading, error, total } = useSelector(state => state.reimbursements)
-  console.log('re', reimbursements)
   const [showForm, setShowForm] = useState(false)
   const [selectedComponent, setSelectedComponent] = useState(null)
   const [selectedKeyword, setSelectedKeyword] = useState('')
@@ -35,6 +34,7 @@ const ReimbursementsComponent = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userRole = user?.role
+  const employeeId = user?.id
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -77,6 +77,46 @@ const ReimbursementsComponent = () => {
   }
 
   const columns = [
+    ...(userRole === '1'
+      ? [
+          {
+            field: 'employeeId',
+            headerName: 'Employee Name',
+            flex: 2,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            renderCell: params => {
+              const employee = params.row.employee
+              return employee ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%'
+                  }}
+                >
+                  <img
+                    src={employee.image}
+                    alt={`${employee.first_name} ${employee.last_name}`}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      marginRight: 10
+                    }}
+                  />
+                  <span>
+                    {employee.first_name} {employee.last_name}
+                  </span>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+              )
+            }
+          }
+        ]
+      : []),
     {
       field: 'reimbursements',
       headerName: 'Name',
@@ -101,14 +141,26 @@ const ReimbursementsComponent = () => {
       align: 'center',
       headerClassName: 'super-app-theme--header'
     },
-    // {
-    //   field: 'salarytype',
-    //   headerName: 'Salary Type',
-    //   flex: 1,
-    //   headerAlign: 'center',
-    //   align: 'center',
-    //   headerClassName: 'super-app-theme--header'
-    // },
+    {
+      field: 'proof',
+      headerName: 'Proof',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: params => {
+        const hasProof = params.value && params.value !== 'No proof uploaded'
+        return <Typography color={hasProof ? 'primary' : 'error'}>{hasProof ? 'Yes' : 'No'}</Typography>
+      }
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header'
+    },
     {
       field: 'description',
       headerName: 'Description',
@@ -138,18 +190,16 @@ const ReimbursementsComponent = () => {
       <ToastContainer position='top-center' />
 
       <Dialog open={showForm} onClose={handleClose} fullWidth maxWidth='md'>
-        <DialogTitle>{selectedComponent ? 'Edit Salary Component' : 'Add Salary Component'}</DialogTitle>
         <DialogContent>
           <ReimbursementsForm
             id={selectedComponent}
             handleClose={handleClose}
             debouncedFetch={debouncedFetch}
             reimbursements={reimbursements}
+            userRole={userRole}
+            employeeId={employeeId}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-        </DialogActions>
       </Dialog>
 
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
@@ -161,7 +211,7 @@ const ReimbursementsComponent = () => {
             Dashboard / Reimbursement Component
           </Typography>
         </Box>
-        {userRole === '1' && (
+        {userRole !== '1' && (
           <Box display='flex' alignItems='center'>
             <Button
               style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
@@ -175,28 +225,29 @@ const ReimbursementsComponent = () => {
           </Box>
         )}
       </Box>
-
-      <Grid container spacing={6} alignItems='center' mb={2}>
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='search'
-            variant='outlined'
-            value={selectedKeyword}
-            onChange={handleInputChange}
-            InputProps={{
-              sx: {
-                borderRadius: '50px'
-              },
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-          />
+      {userRole === '1' && (
+        <Grid container spacing={6} alignItems='center' mb={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label='search'
+              variant='outlined'
+              value={selectedKeyword}
+              onChange={handleInputChange}
+              InputProps={{
+                sx: {
+                  borderRadius: '50px'
+                },
+                endAdornment: (
+                  <InputAdornment position='end'>
+                    <SearchIcon />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid

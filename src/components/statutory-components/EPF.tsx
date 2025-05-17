@@ -27,6 +27,7 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
     IncludedInCTC: false,
     isPFWageLessThan15K: "",
   });
+  const [company_id, setCompany_id] = useState('')
   const [employeeId, setEmployeeId] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,9 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const companyId = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user')) : {};
     setEmployeeId(user.id);
+    setCompany_id(companyId.company_id)
   }, []);
 
   useEffect(() => {
@@ -72,6 +75,7 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
       const payload = {
         EPF: formData,
         employeeId,
+        company_id
       };
 
       const response = await fetch(url, {
@@ -156,6 +160,7 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
         <Grid item xs={12}>
           <TextField
             fullWidth
+            type="number"
             required
             label="Employee Contribution Rate"
             name="EmployeeRate"
@@ -167,6 +172,7 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
         <Grid item xs={12}>
           <TextField
             fullWidth
+            type="number"
             required
             label="Employer Contribution Rate"
             name="EmployerRate"
@@ -226,7 +232,7 @@ const EPFForm = ({ handleClose, setformId, rowData, debouncedFetch, declaration 
           severity={error ? "error" : "success"}
           sx={{ width: '100%' }}
         >
-          {error ? `Error: ${error}` : "Basic Information saved successfully!"}
+          {error ? `Error: ${error}` : "EPF Information saved successfully!"}
         </Alert>
       </Snackbar>
     </Box>

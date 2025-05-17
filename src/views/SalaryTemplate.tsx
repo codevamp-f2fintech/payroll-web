@@ -19,6 +19,7 @@ import {
   ListItem,
   ListItemText,
 } from '@mui/material';
+import SalaryDetails from '@/components/salary-template/SalaryDetails';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add';
@@ -91,62 +92,33 @@ const SalaryTemplate = () => {
   const columns = [
     {
       field: 'name',
-      headerName: 'Name',
+      headerName: 'Salarytemplate Name',
       flex: 1.5,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header',
     },
     {
-      field: 'baseSalary',
-      headerName: 'Base Salary',
+      field: 'ctc',
+      headerName: 'Annual CTc',
       flex: 1,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header',
     },
     {
-      field: 'netSalary',
-      headerName: 'Net Salary',
-      flex: 1,
-      headerAlign: 'center',
-      align: 'center',
-      headerClassName: 'super-app-theme--header',
-    },
-    {
-      field: 'earningType',
-      headerName: 'EarningType',
+      field: 'monthlyCTC',
+      headerName: 'Monthly CTC',
       flex: 1,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header',
       renderCell: (params) => {
-        const count = params.row.earningTypes.length
-
+        const monthlyCTC = params.row.monthlyCTC
         return (
-          <>
-            <Typography>
-              {count}
-            </Typography>
-          </>
-        )
-      }
-    },
-    {
-      field: 'deductionType',
-      headerName: 'DeductionType',
-      flex: 1,
-      headerAlign: 'center',
-      align: 'center',
-      headerClassName: 'super-app-theme--header',
-      renderCell: (params) => {
-        const count = params.row.deductionTypes.length
-        return (
-          <>
-            <Typography>
-              {count}
-            </Typography>
-          </>
+          <Typography>
+            {Number(monthlyCTC).toFixed(2)}
+          </Typography>
         )
       }
     },
@@ -157,6 +129,44 @@ const SalaryTemplate = () => {
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header',
+    },
+    {
+      field: 'details',
+      headerName: 'View Details',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: (params) => {
+        const [open, setOpen] = useState(false);
+
+        const rowData = salaryTemplates.find((tem) => tem?._id === params.row._id);
+
+        const handleClickOpen = () => {
+          setOpen(true);
+          debouncedFetch();
+
+        };
+
+        const handleClose = () => {
+          setOpen(false);
+        };
+
+        return (
+          <>
+            <Button variant="outlined" onClick={handleClickOpen}>
+              View
+            </Button>
+            <SalaryDetails
+              open={open}
+              onClose={handleClose}
+              data={rowData}
+
+
+            />
+          </>
+        );
+      }
     },
     {
       field: 'edit',

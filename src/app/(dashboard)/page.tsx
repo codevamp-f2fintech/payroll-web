@@ -1,54 +1,70 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
 import Grid from '@mui/material/Grid'
-import SalaryPackage from '@/views/dashboard/SalaryPackage';
-import OfferLetter from '@/views/dashboard/OfferLetter';
-import IncrementLetter from '@/views/dashboard/IncrementLetter';
-import WarningLetter from '@/views/dashboard/WarningLetter';
-// import PaymentHistory from '@/views/dashboard/PaymentHistory';
-import AdminDashboard from '@/views/dashboard/AdminDashboard';
-import PaymentHistory from '@/views/dashboard/IncrementLetter';
-
+import SuperAdminDashboard from '@/views/dashboard/SuperAdmin'
+import PayrollCostSummary from '@/views/dashboard/PayrollSummary'
+import PayrollDashboard from '@/views/dashboard/Admin/PayrollDetails'
+import AttendanceDetails from '@/views/dashboard/Admin/AttendanceDetails'
+import AttendanceSummary from '@/views/dashboard/Employee/Attendance'
+import LoansDetails from '@/views/dashboard/Admin/LoanDetails'
+import ReimbursementDetails from '@/views/dashboard/Admin/ReimbursementDetails'
+import DeclarationDetails from '@/views/dashboard/Admin/DeclarationDetails'
+import DeclarationSummary from '@/views/dashboard/Employee/Declaration'
+import GreetingSummary from '@/views/dashboard/Employee/Greeting'
+import PayrollSummary from '@/views/dashboard/Employee/Payroll'
+import Greeting from '@/views/dashboard/Admin/Greeting'
 const DashboardAnalytics = () => {
-  const [userRole, setUserRole] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>("")
 
   useEffect(() => {
     if (userRole === "") {
       // Get user data from localStorage
-      const user = JSON.parse(localStorage.getItem("user") || '{}');
-      setUserRole(user.role || ""); // Fallback to an empty string if role is not found
+      const user = JSON.parse(localStorage.getItem("user") || '{}')
+      setUserRole(user.role || "") // Fallback to an empty string if role is not found
     }
-  }, [userRole]);
+  }, [userRole])
+
+  const renderDashboard = () => {
+    switch (userRole) {
+      case '0':
+        return (
+          <Grid item xs={12}>
+            <SuperAdminDashboard />
+          </Grid>
+        )
+      case '1':
+        return (
+          <><Grid item xs={12}>
+            <Greeting />
+            <PayrollDashboard />
+            <AttendanceDetails />
+            <LoansDetails />
+            <ReimbursementDetails />
+            <DeclarationDetails />
+          </Grid>
+
+          </>
+        )
+      default:
+        return (
+          <>
+            <Grid item xs={12}>
+              <GreetingSummary />
+              <PayrollSummary />
+              <AttendanceSummary />
+              <DeclarationSummary />
+            </Grid>
+          </>
+        )
+    }
+  }
 
   return (
     <Grid container spacing={6}>
-      {userRole === '1' ? (
-        // Render Admin Dashboard if userRole is '1'
-        <Grid item xs={12}>
-          <AdminDashboard />
-        </Grid>
-      ) : (
-        // Render other components for other roles
-        <>
-          <Grid item xs={12} md={6}>
-            <SalaryPackage />
-          </Grid>
-          <Grid item xs={12} md={6} lg={6}>
-            <OfferLetter />
-          </Grid>
-          <Grid item xs={12} md={5} lg={5}>
-            <PaymentHistory />
-          </Grid>
-          <Grid item xs={12} md={7} lg={7}>
-            <WarningLetter />
-          </Grid>
-          {/* Add any additional components below */}
-        </>
-      )}
+      {renderDashboard()}
     </Grid>
-  );
-};
+  )
+}
 
-export default DashboardAnalytics;
+export default DashboardAnalytics

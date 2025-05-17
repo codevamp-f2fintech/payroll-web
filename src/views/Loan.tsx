@@ -22,12 +22,12 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useDispatch, useSelector } from 'react-redux'
 import LoanForm from '@/components/loan/LoanForm'
+import LoanDetails from '@/components/loan/LoanDetails'
 import { fetchLoans } from '@/redux/features/loan/loanSlice'
 import { RootState } from '@/redux/store'
 const LoanComponent = () => {
   const dispatch = useDispatch()
   const { loans, loading, total } = useSelector((state: RootState) => state.loans)
-  console.log('loan', loans)
   const [showForm, setShowForm] = useState(false)
   const [selectedComponent, setSelectedComponent] = useState(null)
   const [selectedKeyword, setSelectedKeyword] = useState('')
@@ -37,7 +37,6 @@ const LoanComponent = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userRole = user?.role
   const employeeId = user?.id
-  console.log('emp', employeeId)
 
   const debouncedFetch = useCallback(
     debounce(() => {
@@ -80,47 +79,48 @@ const LoanComponent = () => {
   }
 
   const columns = [
-    {
-      field: 'employeeId',
-      headerName: 'Employee Name',
-      flex: 1,
-      headerAlign: 'center',
-      headerClassName: 'super-app-theme--header',
-      renderCell: (params) => {
-        const employee = params.row.employee;
-        return employee ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
-            <img
-              src={employee.image}
-              alt={`${employee.first_name} ${employee.last_name}`}
-              style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }}
-            />
-            <span>{employee.first_name} {employee.last_name}</span>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
-        );
-      },
-    },
+    ...(userRole === '1'
+      ? [
+        {
+          field: 'employeeId',
+          headerName: 'Employee Name',
+          flex: 2,
+          headerAlign: 'center',
+          headerClassName: 'super-app-theme--header',
+          renderCell: (params) => {
+            const employee = params.row.employee;
+            return employee ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                }}
+              >
+                <img
+                  src={employee.image}
+                  alt={`${employee.first_name} ${employee.last_name}`}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: '50%',
+                    marginRight: 10,
+                  }}
+                />
+                <span>{employee.first_name} {employee.last_name}</span>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', width: '100%' }}>N/A</div>
+            );
+          },
+        },
+      ]
+      : []),
     {
       field: 'loantype',
       headerName: 'Loan Type',
       flex: 1.5,
-      headerAlign: 'center',
-      align: 'center',
-      headerClassName: 'super-app-theme--header'
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      flex: 1,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header'
@@ -133,21 +133,64 @@ const LoanComponent = () => {
       align: 'center',
       headerClassName: 'super-app-theme--header'
     },
-    // {
-    //   field: 'salarytype',
-    //   headerName: 'Salary Type',
-    //   flex: 1,
-    //   headerAlign: 'center',
-    //   align: 'center',
-    //   headerClassName: 'super-app-theme--header'
-    // },
     {
-      field: 'reason',
-      headerName: 'Reason',
-      flex: 1.5,
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
       headerAlign: 'center',
       align: 'center',
       headerClassName: 'super-app-theme--header'
+    },
+
+    {
+      field: 'proof',
+      headerName: 'Proof',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: params => {
+        const hasProof = params.value && params.value !== 'No proof uploaded'
+        return <Typography color={hasProof ? 'primary' : 'error'}>{hasProof ? 'Yes' : 'No'}</Typography>
+      }
+    },
+    {
+      field: 'details',
+      headerName: 'View Details',
+      flex: 1.5,
+      headerAlign: 'center',
+      align: 'center',
+      headerClassName: 'super-app-theme--header',
+      renderCell: (params) => {
+        const [open, setOpen] = useState(false);
+
+        const rowData = loans.find((loan) => loan?._id === params.row._id);
+
+        const handleClickOpen = () => {
+          setOpen(true);
+          debouncedFetch();
+
+        };
+
+        const handleClose = () => {
+          setOpen(false);
+        };
+
+        return (
+          <>
+            <Button variant="outlined" onClick={handleClickOpen}>
+              View
+            </Button>
+            <LoanDetails
+              open={open}
+              onClose={handleClose}
+              data={rowData}
+
+
+            />
+          </>
+        );
+      }
     },
     {
       field: 'edit',
@@ -191,42 +234,44 @@ const LoanComponent = () => {
             Dashboard / Loan Component
           </Typography>
         </Box>
-        {/* {userRole === '' && ( */}
-        <Box display='flex' alignItems='center'>
-          <Button
-            style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
-            variant='contained'
-            color='warning'
-            startIcon={<AddIcon />}
-            onClick={handleComponentAddClick}
-          >
-            Loan
-          </Button>
-        </Box>
-        {/* )} */}
+        {userRole !== '1' && (
+          <Box display='flex' alignItems='center'>
+            <Button
+              style={{ borderRadius: 50, backgroundColor: '#2e7d32' }}
+              variant='contained'
+              color='warning'
+              startIcon={<AddIcon />}
+              onClick={handleComponentAddClick}
+            >
+              Loan
+            </Button>
+          </Box>
+        )}
       </Box>
-
-      <Grid container spacing={6} alignItems='center' mb={2}>
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='search'
-            variant='outlined'
-            value={selectedKeyword}
-            onChange={handleInputChange}
-            InputProps={{
-              sx: {
-                borderRadius: '50px'
-              },
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-          />
+      {userRole === '1' && (
+        <Grid container spacing={6} alignItems='center' mb={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label='search'
+              variant='outlined'
+              value={selectedKeyword}
+              onChange={handleInputChange}
+              InputProps={{
+                sx: {
+                  borderRadius: '50px'
+                },
+                endAdornment: (
+                  <InputAdornment position='end'>
+                    <SearchIcon />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      )}
+
 
       <Box sx={{ height: 600, width: '100%' }}>
         <DataGrid

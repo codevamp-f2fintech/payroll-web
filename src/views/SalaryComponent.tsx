@@ -160,9 +160,6 @@ const SalaryComponent = () => {
       <ToastContainer position='top-center' />
 
       <Dialog open={showForm} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          {selectedComponent ? 'Edit Salary Component' : 'Add Salary Component'}
-        </DialogTitle>
         <DialogContent>
           <AddSalaryComponentForm
             id={selectedComponent}
@@ -170,9 +167,6 @@ const SalaryComponent = () => {
             debouncedFetch={debouncedFetch}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-        </DialogActions>
       </Dialog>
 
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>

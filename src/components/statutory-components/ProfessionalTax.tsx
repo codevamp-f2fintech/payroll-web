@@ -12,13 +12,11 @@ import {
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 
-const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
-  const [preview, setPreview] = useState(null);
+const ProfessionalTaxForm = ({ handleClose, rowData, debouncedFetch, formId }) => {
   const [formData, setFormData] = useState({
-    houseRent: "",
-    landlordName: "",
-    landlordAddress: "",
-    proof: null,
+    ProfTaxNumber: "",
+    DeductionCycle: "Monthly",
+    EmployeeDeduction: "",
   });
 
   const [toastOpen, setToastOpen] = useState(false);
@@ -26,16 +24,12 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (rowData && rowData.hra) {
+    if (rowData && rowData.ProfessionalTax) {
       setFormData({
-        houseRent: rowData.hra.houseRent || "",
-        landlordName: rowData.hra.landlordName || "",
-        landlordAddress: rowData.hra.landlordAddress || "",
-        proof: null,
+        ProfTaxNumber: rowData.ProfessionalTax.ProfTaxNumber || "",
+        DeductionCycle: rowData.ProfessionalTax.DeductionCycle || "",
+        EmployeeDeduction: rowData.ProfessionalTax.EmployeeDeduction || "",
       });
-      if (rowData.hra.proof) {
-        setPreview(rowData.hra.proof);
-      }
     }
   }, [rowData]);
 
@@ -44,45 +38,24 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, proof: file }));
 
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreview(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPreview(null);
-      }
-    }
-  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
 
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/update/${formId}`;
-    const formDataToSend = new FormData();
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/statutory-components/update/${formId}`;
 
-    const hraData = {
-      houseRent: formData.houseRent,
-      landlordName: formData.landlordName,
-      landlordAddress: formData.landlordAddress,
-    };
-    formDataToSend.append("hra", JSON.stringify(hraData));
-
-    if (formData.proof instanceof File) {
-      formDataToSend.append("proof", formData.proof);
-    }
 
     try {
       const response = await fetch(url, {
         method: 'PUT',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ProfessionalTax: formData
+        }),
       });
 
       if (!response.ok) {
@@ -96,6 +69,8 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
         // Delay closing the form
         setTimeout(() => {
           handleClose();
+          debouncedFetch();
+
         }, 1000);
       }
     } catch (error) {
@@ -118,30 +93,20 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
     <Box p={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">
-          {rowData ? "Edit Professinal Tax" : "Professinal Tax"}
+          {rowData ? "Edit Professional Tax" : "Professional Tax"}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
       </Box>
 
-      {/* <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Rent of House"
-            name="houseRent"
-            value={formData.houseRent}
-            onChange={handleChange}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label="Name of Landlord"
-            name="landlordName"
-            value={formData.landlordName}
+            label="PT Number"
+            name="ProfTaxNumber"
+            value={formData.ProfTaxNumber}
             onChange={handleChange}
           />
         </Grid>
@@ -149,41 +114,23 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Address"
-            name="landlordAddress"
-            value={formData.landlordAddress}
+            label="Deduction Cycle"
+            name="DeductionCycle"
+            value={formData.DeductionCycle}
             onChange={handleChange}
-            multiline
-            rows={3}
           />
         </Grid>
 
         <Grid item xs={12}>
           <TextField
             fullWidth
-            type="file"
-            InputLabelProps={{ shrink: true }}
-            onChange={handleFileChange}
-            inputProps={{
-              accept: '.pdf,.jpg,.jpeg,.png',
-            }}
+            type="number"
+            label="Deduction amount"
+            name="EmployeeDeduction"
+            value={formData.EmployeeDeduction}
+            onChange={handleChange}
           />
-          {formData.proof && (
-            <Typography variant="caption" color="textSecondary">
-              Selected file: {formData.proof.name}
-            </Typography>
-          )}
-          {preview && (
-            <div style={{ marginTop: '10px' }}>
-              <img
-                src={preview}
-                alt="Preview"
-                style={{ maxWidth: '100%', maxHeight: '200px' }}
-              />
-            </div>
-          )}
         </Grid>
-
         <Grid item xs={12}>
           <Button
             fullWidth
@@ -195,7 +142,7 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
             {isSubmitting ? "Saving..." : (rowData ? "Update" : "Save")}
           </Button>
         </Grid>
-      </Grid> */}
+      </Grid>
 
       <Snackbar
         open={toastOpen}
@@ -208,7 +155,7 @@ const ProfessionalTaxForm = ({ handleClose, rowData, formId }) => {
           severity={error ? "error" : "success"}
           sx={{ width: '100%' }}
         >
-          {error ? `Error: ${error}` : "HRA information saved successfully!"}
+          {error ? `Error: ${error}` : "ProfessionalTax information saved successfully!"}
         </Alert>
       </Snackbar>
     </Box>

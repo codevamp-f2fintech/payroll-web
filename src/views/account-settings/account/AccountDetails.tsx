@@ -24,7 +24,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-// import { fetchConfiguration } from '@/utility/setting-configuration/settingConfig';
 import { fetchOrganizations } from '@/redux/features/organization/organizationSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -56,10 +55,9 @@ const CropContainer = styled(Box)({
 });
 
 const AccountDetails = () => {
+  const { organizations } = useSelector((state: RootState) => state.organization);
   const dispatch = useDispatch();
 
-  const { organizations } = useSelector((state: RootState) => state.organization);
-  console.log('organization', organizations)
   const [logo, setLogo] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -73,7 +71,6 @@ const AccountDetails = () => {
   const [contactNo, setContactNo] = useState('');
   const [locations, setLocations] = useState<string[]>(['']); // Array for addresses
   const [branches, setBranches] = useState<string[]>(['']); // Array for branches
-  const [companyId, setCompanyId] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -82,62 +79,49 @@ const AccountDetails = () => {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
   const [openAlert, setOpenAlert] = useState(false);
-  const [organizationData, setOrganizationData] = useState(null);
 
   const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
 
-  const API_URL = process.env.NEXT_PUBLIC_APP_URL;
-
-  const debouncedFetch = useCallback(
-    debounce(() => {
-      dispatch(fetchOrganizations());
-    }, 300),
-    []
-  );
-
   useEffect(() => {
-    debouncedFetch();
-    return debouncedFetch.cancel;
-  }, [debouncedFetch]);
-
-  useEffect(() => {
-    if (organizations && organizations.length > 0) {
-      setOrganizationData(organizations[0]); // Assuming we want to show the first organization
+    if (organizations?.data?.[0]?._id) {
+      setConfigId(organizations?.data?.[0]?._id);
     }
-  }, [organizations]);
-
-  const id = organizations.find(org => org._id)
+  }, [organizations, configId])
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // const result = await dispatch(fetchOrganizations()).unwrap();
-        // const currentOrg = result.find(org => org._id === id);
+    dispatch(fetchOrganizations());
+  }, [dispatch]);
 
-        if (organizationData) {
-          setCompanyName(organizationData.name);
-          setAboutUs(organizationData.description);
-          setEmail(organizationData.email);
-          setContactNo(organizationData.contactNo);
-          setLocations(organizationData.address || ['']);
-          setBranches(organizationData.branch || ['']);
-          setLogo(organizationData.image);
-          setConfigId(organizationData._id);
-          setIsEditing(true);
-          setCompanyId(organizationData.company_id);
+
+
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      try {
+        // Only proceed if configId is available and not null
+        if (!configId) return;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/organization-profile/get/${configId}`);
+        const result = await response.json();
+
+        if (result.data) {
+          setCompanyName(result.data.name || '');
+          setEmail(result.data.email || '');
+          setContactNo(result.data.contactNo || '');
+          setAboutUs(result.data.description || '');
+          setLocations(result.data.address ? (result.data.address) : ['']);
+          setBranches(result.data.branch ? (result.data.branch) : ['']);
+          setLogo(result.data.image)
+          setIsEditing(true); // Enable editing mode if data exists
         }
       } catch (error) {
-        console.error('Error fetching configuration:', error);
-        showAlert('Error loading configuration.', 'error');
+        console.error("Error fetching company data:", error);
       } finally {
         setDataLoaded(true);
       }
     };
 
-    fetchData();
-  }, [dispatch, organizationData]);
-
-
+    fetchCompanyData();
+  }, [configId]);
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -187,34 +171,35 @@ const AccountDetails = () => {
     setBranches(updatedBranches);
   };
 
-
   const handleSubmit = async () => {
     if (!companyName || !aboutUs || !email || !contactNo) {
       showAlert('Please fill out all required fields!', 'error');
       return;
     }
-
+    const cleanArray = (arr: string[]) => arr.map(item => item.trim()).filter(item => item.length > 0);
+    const cleanedLocations = cleanArray(locations);
+    const cleanedBranches = cleanArray(branches.map(branch => branch.toLowerCase()));
     const formData = new FormData();
     formData.append('name', companyName);
     formData.append('description', aboutUs);
     formData.append('email', email);
     formData.append('contactNo', contactNo);
-    formData.append('address', JSON.stringify(locations)); // Send locations as JSON
-    const lowercaseBranches = branches.map(branch => branch.toLowerCase());
-    formData.append('branch', JSON.stringify(lowercaseBranches));
+    cleanedLocations.forEach((loc, i) => formData.append(`address[${i}]`, loc));
+    cleanedBranches.forEach((branch, i) => formData.append(`branch[${i}]`, branch));
     formData.append('company_id', company_id);
 
     if (logo && !logo.startsWith('http')) {
       const response = await fetch(logo);
       const blob = await response.blob();
-      formData.append('file', blob, 'logo.png');
+      const filename = `logo_${Date.now()}.png`;
+      formData.append('file', blob, filename);
     }
 
     try {
       const method = isEditing && configId ? 'PUT' : 'POST';
       const url = isEditing
-        ? `${API_URL}/organization-profile/update/${configId}`
-        : `${API_URL}/organization-profile/create`;
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/organization-profile/update/${configId}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/organization-profile/create`;
 
       const configResponse = await fetch(url, {
         method,

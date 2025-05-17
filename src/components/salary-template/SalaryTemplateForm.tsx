@@ -8,244 +8,368 @@ import {
   Grid,
   IconButton,
   TextField,
-  FormControl,
   Autocomplete,
   InputAdornment,
   List,
   ListItem,
   ListItemText,
+  Divider,
+  Paper,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { RootState } from '@/redux/store';
 
 const AddSalaryTemplateForm = ({ id, handleClose, debouncedFetch }) => {
-  const { salaryTemplates } = useSelector((state: RootState) => state.salaryTemplates);
-  const { salaryComponents } = useSelector((state: RootState) => state.salaryComponents);
+  const { salaryTemplates } = useSelector((state) => state.salaryTemplates);
+  const { salaryComponents } = useSelector((state) => state.salaryComponents);
+  const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('user')) : {};
 
-  const [formData, setFormData] = useState({
+  const initialState = {
     name: '',
     description: '',
-    ctc: 0,
+    ctc: '',
+    monthlyCTC: 0,
+    components: {
+      basic: {
+        type: 'Basic',
+        percentage: 50,
+        monthlyAmount: 0,
+        yearlyAmount: 0,
+        isFixed: true
+      },
+      fixedAllowance: {
+        type: 'Fixed Allowance',
+        percentage: 50,
+        monthlyAmount: 0,
+        yearlyAmount: 0,
+        isFixed: true
+      }
+    },
     earnings: [],
     benefits: [],
-    deductions: [],
     reimbursements: [],
-    netSalary: 0
-  });
+    deductions: [],
+    company_id: company_id
 
-  const [errors, setErrors] = useState({
-    name: '',
-    ctc: '',
-    earnings: '',
-    benefits: '',
-    deductions: '',
-    reimbursements: ''
-  });
+  };
+
+  const [formData, setFormData] = useState(initialState);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (id) {
-      const selected = salaryTemplates.find(temp => temp._id === id);
-      if (selected) {
-        setFormData({
-          name: selected.name,
-          description: selected.description,
-          ctc: selected.ctc,
-          earnings: selected.earnings || [],
-          benefits: selected.benefits || [],
-          deductions: selected.deductions || [],
-          reimbursements: selected.reimbursements || [],
-          netSalary: selected.netSalary
-        });
+      const template = salaryTemplates.find(t => t._id === id);
+      if (template) {
+        // Ensure components has the correct structure
+        const components = {
+          basic: {
+            type: 'Basic',
+            percentage: 50,
+            monthlyAmount: template.components?.basic?.monthlyAmount || 0,
+            yearlyAmount: template.components?.basic?.yearlyAmount || 0,
+            isFixed: true
+          },
+          fixedAllowance: {
+            type: 'Fixed Allowance',
+            percentage: template.components?.fixedAllowance?.percentage || 50,
+            monthlyAmount: template.components?.fixedAllowance?.monthlyAmount || 0,
+            yearlyAmount: template.components?.fixedAllowance?.yearlyAmount || 0,
+            isFixed: true
+          }
+        };
+
+        setFormData(prevState => ({
+          ...prevState,
+          ...template,
+          components,
+          company_id,
+        }));
       }
     }
   }, [id, salaryTemplates]);
 
-  const calculateComponentAmounts = (component, ctc) => {
-    console.log("cp", component)
-    if (component.calculationtype === 'Percentage of CTC') {
-      const yearlyAmount = (ctc * component.amount) / 100 // Divide by 12 for monthly and 100 for percentage
-      return {
-        calculatetype: "%",
-        monthlyAmount: (yearlyAmount / 12).toFixed(2),
-        yearlyAmount: yearlyAmount
-      };
-    }
-    if (component.type === 'EPF') {
-      // Assuming basic salary is 50% of CTC - adjust this percentage as needed
-      const basicSalary = ctc * 0.5;
-      const monthlyAmount = (basicSalary * component.amount) / 1200;
-      return {
+  const calculateAmounts = (ctc, components = {
+    earnings: formData.earnings,
+    benefits: formData.benefits,
+    reimbursements: formData.reimbursements,
+    deductions: formData.deductions
+  }) => {
+    // Calculate Basic (50% of CTC)
+    const yearlyBasic = ctc * 0.5;
+    const monthlyBasic = yearlyBasic / 12;
 
-        monthlyAmount: monthlyAmount.toFixed(2),
-        yearlyAmount: (monthlyAmount * 12)
-      };
-    }
+    const calculateComponentAmount = (component, basicAmount) => {
+      let yearlyAmount = 0;
+      let monthlyAmount = 0;
+
+      switch (component.type) {
+        case 'HRA':
+          yearlyAmount = (basicAmount * component.amount) / 100;
+          break;
+        case 'EPF':
+          yearlyAmount = (basicAmount * component.amount) / 100;
+          break;
+        default:
+          yearlyAmount = component.amount * 12;
+      }
+      monthlyAmount = yearlyAmount / 12;
+      return { yearlyAmount, monthlyAmount };
+    };
+
+    // Calculate amounts for all components
+    const processComponents = (items, basicAmount) => {
+      return items.map(comp => {
+        const { yearlyAmount, monthlyAmount } = calculateComponentAmount(comp, basicAmount);
+        return {
+          ...comp,
+          yearlyAmount,
+          monthlyAmount
+        };
+      });
+    };
+
+    const updatedEarnings = processComponents(components.earnings, yearlyBasic);
+    const updatedBenefits = processComponents(components.benefits, yearlyBasic);
+    const updatedReimbursements = processComponents(components.reimbursements, yearlyBasic);
+    const updatedDeductions = processComponents(components.deductions, yearlyBasic);
+
+    // Calculate totals
+    const calculateTotal = items => items.reduce((sum, item) => sum + item.yearlyAmount, 0);
+
+    const earningsTotal = calculateTotal(updatedEarnings);
+    const benefitsTotal = calculateTotal(updatedBenefits);
+    const reimbursementsTotal = calculateTotal(updatedReimbursements);
+    const deductionsTotal = calculateTotal(updatedDeductions);
+
+    // Calculate remaining amount for Fixed Allowance
+    const totalAllocated = yearlyBasic + earningsTotal + benefitsTotal + reimbursementsTotal + deductionsTotal;
+    const remainingForFixed = Math.max(0, ctc - totalAllocated);
+
     return {
-      monthlyAmount: component.amount,
-      yearlyAmount: (component.amount * 12)
+      basic: {
+        type: 'Basic',
+        percentage: 50,
+        monthlyAmount: monthlyBasic,
+        yearlyAmount: yearlyBasic,
+        isFixed: true
+      },
+      fixedAllowance: {
+        type: 'Fixed Allowance',
+        percentage: (remainingForFixed / ctc) * 100,
+        monthlyAmount: remainingForFixed / 12,
+        yearlyAmount: remainingForFixed,
+        isFixed: true
+      },
+      updatedComponents: {
+        earnings: updatedEarnings,
+        benefits: updatedBenefits,
+        reimbursements: updatedReimbursements,
+        deductions: updatedDeductions
+      }
     };
   };
 
-  const updateNetSalary = () => {
-    const calculateTotal = (components) => {
-      return components.reduce((sum, comp) => {
-        // Ensure we're working with numbers, not strings
-        const amount = parseFloat(comp.yearlyAmount) || 0;
-        return sum + amount;
-      }, 0);
+  const handleCTCChange = (e) => {
+    const ctc = parseFloat(e.target.value) || 0;
+    const { basic, fixedAllowance, updatedComponents } = calculateAmounts(ctc);
+
+    setFormData(prevState => ({
+      ...prevState,
+      ctc: ctc,
+      monthlyCTC: ctc / 12,
+      components: {
+        basic,
+        fixedAllowance
+      },
+      ...updatedComponents
+    }));
+  };
+
+  const handleComponentAdd = (type, newComponent) => {
+    if (!newComponent) return;
+
+    const componentAmount = {
+      componentId: newComponent._id,
+      type: newComponent.type,
+      calculationType: newComponent.calculationType || 'flat',
+      amount: newComponent.amount || 0,
+      monthlyAmount: 0,
+      yearlyAmount: 0
     };
 
-    // Calculate totals for each component type
-    const earningsTotal = calculateTotal(formData.earnings);
-    const benefitsTotal = calculateTotal(formData.benefits);
-    const deductionsTotal = calculateTotal(formData.deductions);
-    const reimbursementsTotal = calculateTotal(formData.reimbursements);
+    const updatedFormData = {
+      ...formData,
+      [type]: [...formData[type], componentAmount]
+    };
 
-    // Calculate net salary
-    const netSalary = earningsTotal + benefitsTotal + reimbursementsTotal - deductionsTotal;
+    const { basic, fixedAllowance, updatedComponents } = calculateAmounts(formData.ctc, {
+      ...updatedFormData,
+      [type]: updatedFormData[type]
+    });
 
-    setFormData(prev => ({
-      ...prev,
-      netSalary: parseFloat(netSalary.toFixed(2))
+    setFormData({
+      ...updatedFormData,
+      components: {
+        basic,
+        fixedAllowance
+      },
+      ...updatedComponents
+    });
+  };
+
+  const handleComponentRemove = (type, componentId) => {
+    const updatedComponents = formData[type].filter(comp => comp.componentId !== componentId);
+
+    const { basic, fixedAllowance, updatedComponents: recalculatedComponents } = calculateAmounts(formData.ctc, {
+      ...formData,
+      [type]: updatedComponents
+    });
+
+    setFormData(prevState => ({
+      ...prevState,
+      components: {
+        basic,
+        fixedAllowance
+      },
+      [type]: updatedComponents,
+      ...recalculatedComponents
     }));
   };
 
+  const renderComponentSection = (title, type, components) => (
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>
+      <Autocomplete
+        options={salaryComponents.filter(comp =>
+          comp.salarytype === title &&
+          comp.type !== 'Basic' &&
+          comp.type !== 'Fixed Allowance'
+        )}
+        getOptionLabel={(option) => option.type}
+        onChange={(_, newValue) => handleComponentAdd(type, newValue)}
+        renderInput={(params) => (
+          <TextField {...params} label={`Select ${title}`} size="small" />
+        )}
+      />
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (name === 'ctc') {
-      updateNetSalary();
-    }
-  };
+      {components.length > 0 && (
+        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">COMPONENT</Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">CALCULATION TYPE</Typography>
+            </Grid>
+            <Grid item xs={2}>
+              <Typography variant="subtitle2">MONTHLY</Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">YEARLY</Typography>
+            </Grid>
+            <Grid item xs={1}></Grid>
+          </Grid>
 
-  const handleComponentChange = (type, newValue) => {
-    const componentArray = newValue.map(item => ({
-      componentId: item._id,
-      type: item.type,
-      calculationType: item.type === 'Percentage of CTC' ? 'percentage' : (item.calculationType || 'fixed'),
-      amount: item.amount,
-      ...calculateComponentAmounts({
-        ...item,
-        calculationType: item.type === 'Percentage of CTC' ? 'percentage' : item.calculationType
-      }, formData.ctc)
-    }));
-
-    setFormData(prev => ({
-      ...prev,
-      [type]: componentArray
-    }));
-
-    updateNetSalary();
-  };
+          {components.map((component) => (
+            <Grid container spacing={2} key={component.componentId} sx={{ mt: 1 }}>
+              <Grid item xs={3}>
+                <Typography>{component.type}</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>
+                  {component.type === 'HRA' || component.type === 'EPF'
+                    ? `${component.amount}% of Basic`
+                    : `₹${component.amount}`}
+                </Typography>
+              </Grid>
+              <Grid item xs={2}>
+                <Typography>₹{component.monthlyAmount.toFixed(2)}</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>₹{component.yearlyAmount.toFixed(2)}</Typography>
+              </Grid>
+              <Grid item xs={1}>
+                <IconButton
+                  size="small"
+                  onClick={() => handleComponentRemove(type, component.componentId)}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+          ))}
+        </Paper>
+      )}
+    </Box>
+  );
 
   const validateForm = () => {
-    let isValid = true;
-    const newErrors = {
-      name: '',
-      ctc: '',
-      earnings: '',
-      benefits: '',
-      deductions: '',
-      reimbursements: ''
-    };
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-      isValid = false;
-    }
-    if (!formData.ctc || formData.ctc <= 0) {
-      newErrors.ctc = 'CTC is required';
-      isValid = false;
-    }
-    if (!formData.earnings.length) {
-      newErrors.earnings = 'At least one earning component is required';
-      isValid = false;
-    }
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Template name is required';
+    if (!formData.ctc || formData.ctc <= 0) newErrors.ctc = 'Valid CTC is required';
 
     setErrors(newErrors);
-    return isValid;
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const method = id ? 'PUT' : 'POST';
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      ctc: formData.ctc,
+      monthlyCTC: formData.monthlyCTC,
+      components: formData.components,
+      earnings: formData.earnings,
+      benefits: formData.benefits,
+      reimbursements: formData.reimbursements,
+      deductions: formData.deductions,
+      company_id: formData.company_id
+    };
+
+    try {
       const url = id
         ? `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/update/${id}`
         : `${process.env.NEXT_PUBLIC_APP_URL}/salary-template/create`;
 
-      fetch(url, {
-        method,
+      const response = await fetch(url, {
+        method: id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data) {
-            handleClose();
-            debouncedFetch();
-            toast.success(id ? "Template Updated Successfully" : "Template Created Successfully");
-          }
-        })
-        .catch(error => toast.error('Error: ' + error.message));
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (data) {
+        toast.success(id ? 'Template Updated Successfully' : 'Template Created Successfully');
+        handleClose();
+        debouncedFetch();
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
     }
-  };
+  }
 
-  const renderComponentList = (components) => (
-    <Box mt={2}>
-      <List>
-        {components.map((component) => (
-          <ListItem key={component.componentId}>
-            <Grid container spacing={3}>
-              <Grid item xs={3}>
-                <ListItemText primary={component.type} />
-              </Grid>
-              <Grid item xs={3}>
-                {component?.calculationtype === 'Percentage of CTC' ? (
-                  <ListItemText primary={`${component.amount}% of CTC`} />
-                ) : (
-                  <ListItemText primary={`₹${component?.amount}`} />
-                )}
-
-              </Grid>
-              <Grid item xs={3}>
-                <ListItemText primary={`₹${component.monthlyAmount}`} />
-              </Grid>
-              <Grid item xs={3}>
-                <ListItemText primary={`₹${component.yearlyAmount}`} />
-              </Grid>
-            </Grid>
-          </ListItem>
-        ))}
-      </List>
-    </Box>
-  );
-
-  // Rest of your JSX remains similar, but update the component renderings
   return (
-    <Box sx={{ flexGrow: 1, padding: 2 }}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h5" gutterBottom>
-          {id ? 'Edit Salary Template' : 'Add Salary Template'}
+    <Box sx={{ p: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Typography variant="h5">
+          {id ? 'Edit Salary Template' : 'Create Salary Template'}
         </Typography>
         <IconButton onClick={handleClose}>
           <CloseIcon />
         </IconButton>
       </Box>
 
-      {/* Basic Details */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
             label="Template Name"
-            name="name"
             value={formData.name}
-            onChange={handleChange}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             error={!!errors.name}
             helperText={errors.name}
           />
@@ -254,19 +378,17 @@ const AddSalaryTemplateForm = ({ id, handleClose, debouncedFetch }) => {
           <TextField
             fullWidth
             label="Description"
-            name="description"
             value={formData.description}
-            onChange={handleChange}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth
             label="Annual CTC"
-            name="ctc"
             type="number"
             value={formData.ctc}
-            onChange={handleChange}
+            onChange={handleCTCChange}
             error={!!errors.ctc}
             helperText={errors.ctc}
             InputProps={{
@@ -276,98 +398,86 @@ const AddSalaryTemplateForm = ({ id, handleClose, debouncedFetch }) => {
         </Grid>
       </Grid>
 
-      {/* Component Headers */}
-      <Grid container spacing={3} sx={{ mt: 3, mb: 2 }}>
-        <Grid item xs={3}>
-          <Typography variant="subtitle2">COMPONENT TYPE</Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="subtitle2">CALCULATION TYPE</Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="subtitle2">MONTHLY AMOUNT</Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="subtitle2">ANNUAL AMOUNT</Typography>
-        </Grid>
-      </Grid>
+      {/* Fixed Components Section */}
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Fixed Components</Typography>
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">COMPONENT</Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">CALCULATION TYPE</Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">MONTHLY</Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="subtitle2">YEARLY</Typography>
+            </Grid>
+          </Grid>
 
-      {/* Earnings Section */}
-      <Typography variant="h6" sx={{ mt: 3 }}>Earnings</Typography>
-      <Autocomplete
-        multiple
-        options={salaryComponents.filter(comp => comp.salarytype === 'Earnings')}
-        getOptionLabel={(option) => option.type}
-        value={salaryComponents.filter(comp =>
-          formData.earnings.some(e => e.componentId === comp._id)
-        )}
-        onChange={(_, newValue) => handleComponentChange('earnings', newValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Select Earnings"
-            error={!!errors.earnings}
-            helperText={errors.earnings}
-          />
-        )}
-      />
-      {renderComponentList(formData.earnings, 'earnings')}
+          {Object.entries(formData.components || {}).map(([key, component]) => (
+            <Grid container spacing={2} key={key} sx={{ mt: 1 }}>
+              <Grid item xs={3}>
+                <Typography>{component?.type || ''}</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>{(component?.percentage || 0)}% of ctc</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>₹{(component?.monthlyAmount || 0).toFixed(2)}</Typography>
+              </Grid>
+              <Grid item xs={3}>
+                <Typography>₹{(component?.yearlyAmount || 0).toFixed(2)}</Typography>
+              </Grid>
+            </Grid>
+          ))}
+          {/* Add warning message when Fixed Allowance is 0 */}
+          {formData.components?.fixedAllowance?.monthlyAmount === 0 && (
+            <Typography
+              color="error"
+              sx={{
+                mt: 2,
+                p: 1,
+                bgcolor: '#ffebee',
+                borderRadius: 1
+              }}
+            >
+              Warning: Fixed Allowance is 0. This might indicate that all CTC has been allocated to other components.
+            </Typography>
+          )}
+        </Paper>
+      </Box>
 
-      {/* Benefits Section */}
-      <Typography variant="h6" sx={{ mt: 3 }}>Benefits</Typography>
-      <Autocomplete
-        multiple
-        options={salaryComponents.filter(comp => comp.salarytype === 'Benefit')}
-        getOptionLabel={(option) => option.type}
-        value={salaryComponents.filter(comp =>
-          formData.benefits.some(b => b.componentId === comp._id)
-        )}
-        onChange={(_, newValue) => handleComponentChange('benefits', newValue)}
-        renderInput={(params) => (
-          <TextField {...params} label="Select Benefits" />
-        )}
-      />
-      {renderComponentList(formData.benefits, 'benefit')}
+      <Divider sx={{ my: 3 }} />
 
-      {/* Deductions Section */}
-      <Typography variant="h6" sx={{ mt: 3 }}>Deductions</Typography>
-      <Autocomplete
-        multiple
-        options={salaryComponents.filter(comp => comp.salarytype === 'Deductions')}
-        getOptionLabel={(option) => option.type}
-        value={salaryComponents.filter(comp =>
-          formData.deductions.some(d => d.componentId === comp._id)
-        )}
-        onChange={(_, newValue) => handleComponentChange('deductions', newValue)}
-        renderInput={(params) => (
-          <TextField {...params} label="Select Deductions" />
-        )}
-      />
-      {renderComponentList(formData.deductions, 'deductions')}
+      {/* Additional Components Sections */}
+      {renderComponentSection('Earnings', 'earnings', formData.earnings)}
+      {renderComponentSection('Benefits', 'benefits', formData.benefits)}
+      {renderComponentSection('Reimbursements', 'reimbursements', formData.reimbursements)}
+      {renderComponentSection('Deductions', 'deductions', formData.deductions)}
 
-      {/* Reimbursements Section */}
-      <Typography variant="h6" sx={{ mt: 3 }}>Reimbursements</Typography>
-      <Autocomplete
-        multiple
-        options={salaryComponents.filter(comp => comp.salarytype === 'Reimbursement')}
-        getOptionLabel={(option) => option.type}
-        value={salaryComponents.filter(comp =>
-          formData.reimbursements.some(r => r.componentId === comp._id)
-        )}
-        onChange={(_, newValue) => handleComponentChange('reimbursements', newValue)}
-        renderInput={(params) => (
-          <TextField {...params} label="Select Reimbursements" />
-        )}
-      />
-      {renderComponentList(formData.reimbursements, 'reimbursement')}
-
-      {/* Net Salary */}
       <Grid container spacing={3} sx={{ mt: 3 }}>
         <Grid item xs={12} md={6}>
+          COST TO COMPANY
+        </Grid>
+        <Grid item xs={6} md={3}>
           <TextField
             fullWidth
-            label="Net Salary"
-            value={formData.netSalary}
+            label="Monthly CTC"
+            value={Number(formData.monthlyCTC).toFixed(2)}
+            InputProps={{
+              readOnly: true,
+              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+            }}
+          />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <TextField
+            fullWidth
+            label="Annual CTC"
+            value={formData.ctc}
             InputProps={{
               readOnly: true,
               startAdornment: <InputAdornment position="start">₹</InputAdornment>,
@@ -376,7 +486,6 @@ const AddSalaryTemplateForm = ({ id, handleClose, debouncedFetch }) => {
         </Grid>
       </Grid>
 
-      {/* Submit Button */}
       <Button
         variant="contained"
         fullWidth
@@ -390,3 +499,4 @@ const AddSalaryTemplateForm = ({ id, handleClose, debouncedFetch }) => {
 };
 
 export default AddSalaryTemplateForm;
+

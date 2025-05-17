@@ -113,7 +113,7 @@ const EmployeeCard = ({ employee, id, handleEditEmployeeClick, handleDelete, cap
 
   return (
     <>
-      <StyledCard onClick={handleCardClick}>
+      <StyledCard>
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
             <Loader />

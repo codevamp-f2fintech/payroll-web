@@ -25,7 +25,6 @@ const StatutoryComponentsForm = ({ handleClose, declaration, debouncedFetch, com
     ? components.data.find((declare) => declare._id === declaration)
     : null;
 
-  console.log('rowdata', rowData, declaration, components)
   const handleOpenForm = (formName) => {
     setOpenForm(formName);
   };

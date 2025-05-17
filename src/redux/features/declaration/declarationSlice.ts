@@ -1,12 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-export interface BasicInfo {
+export interface PreviousEmp {
   _id: string;
   name: string;
   designation: string;
   address: string;
   pan: string;
   financialYear: string;
+  company_id: string
 }
 
 export interface HRA {
@@ -15,6 +16,7 @@ export interface HRA {
   landlordName: string;
   landlordAddress: string;
   proof: string | null;
+  status: string;
 }
 
 export interface LTA {
@@ -24,30 +26,50 @@ export interface LTA {
   location: string;
   travelMode: string;
   proof: string | null;
+  status: string;
+
 }
 
-export interface Deduction {
+export interface HouseLoanInterest {
   interestPayable: string;
   lenderName: string;
   lenderAddress: string;
   lenderPan: string;
   proof: string | null;
+  status: string;
+
 }
 
-export interface DeductionUnder {
+export interface Section80C {
   sectionname: string;
   name: string;
   amount: string;
   proof: string | null;
 }
 
+export interface Section80D {
+  sectionname: string;
+  name: string;
+  amount: string;
+  proof: string | null;
+}
+export interface Section80G {
+  sectionname: string;
+  name: string;
+  amount: string;
+  proof: string | null;
+}
 export interface Declarations {
   _id: string;
-  basicInfo: BasicInfo;
+  taxRegime: string,
+  PreviousEmp: PreviousEmp;
   hra: HRA;
   lta: LTA;
-  deductions: Deduction;
-  deductionsunder: DeductionUnder[];
+  HouseLoanInterest: HouseLoanInterest;
+  Section80C: Section80C[];
+  Section80D: Section80D[];
+  Section80G: Section80G[];
+
 }
 
 interface DeclarationState {
@@ -74,19 +96,18 @@ export const fetchDeclarations = createAsyncThunk<{
   async ({ page = 1, limit = 10, keyword = "" }) => {
     try {
       let token: string | null = null;
+      const { company_id } = typeof window !== "undefined" ? JSON.parse(localStorage?.getItem("user")) : {};
 
       if (typeof window !== "undefined") {
         token = localStorage?.getItem('token');
       }
-
-      console.log('Fetching with token:', token);
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/my-declaration/get?page=${page}&limit=${limit}&keyword=${encodeURIComponent(keyword)}`,
         {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${token} ${company_id}`,
             'Content-Type': 'application/json',
           },
         }

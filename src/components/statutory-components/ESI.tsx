@@ -126,6 +126,7 @@ const ESIForm = ({ handleClose, rowData, debouncedFetch, formId }) => {
         <Grid item xs={12}>
           <TextField
             fullWidth
+            type="number"
             label="Employee Rate (%)"
             name="EmployeeRate"
             value={formData.EmployeeRate}
@@ -136,6 +137,7 @@ const ESIForm = ({ handleClose, rowData, debouncedFetch, formId }) => {
         <Grid item xs={12}>
           <TextField
             fullWidth
+            type="number"
             label="Employer Rate  (%)"
             name="EmployerRate"
             value={formData.EmployerRate}

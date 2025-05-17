@@ -9,6 +9,11 @@ import statutoryComponentReducer from '@/redux/features/statutory-component/stat
 import reimbursementReducer from '@/redux/features/reimbursement/reimbursementsSlice'
 import organizationReducer from '@/redux/features/organization/organizationSlice'
 import loanReducer from '@/redux/features/loan/loanSlice'
+import companiesReducer from '@/redux/features/company/companyslice'
+import attendancesReducer from '@/redux/features/attendance/attendanceslice'
+import designationReducer from '@/redux/features/designation/desingationSlice'
+import configrationReducer from '@/redux/features/configuration/configurationSlice'
+import componentTypeReducer from '@/redux/features/componentType/componentTypeSlice';
 
 const store = configureStore({
   reducer: {
@@ -20,10 +25,12 @@ const store = configureStore({
     statutoryComponent: statutoryComponentReducer,
     reimbursements: reimbursementReducer,
     organization: organizationReducer,
-    loans: loanReducer
-
-
-
+    loans: loanReducer,
+    companies: companiesReducer,
+    attendances: attendancesReducer,
+    designations: designationReducer,
+    configration: configrationReducer,
+    componentTypes: componentTypeReducer,
   }
 });
 
