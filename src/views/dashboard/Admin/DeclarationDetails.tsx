@@ -342,7 +342,7 @@ const DeclarationDetails = () => {
                   >
                     <ListItemAvatar>
                       {declaration.employee?.image ? (
-                        <Avatar alt={declaration.employee.first_name} src={declaration.employee.image} />
+                        <Avatar alt={declaration.employee?.first_name} src={declaration.employee?.image} />
                       ) : (
                         <Avatar sx={{ bgcolor: '#4361EE' }}>
                           {declaration.employee?.first_name?.charAt(0)}
@@ -353,10 +353,10 @@ const DeclarationDetails = () => {
                     <ListItemText
                       primary={
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {declaration.employee.first_name} {declaration.employee.last_name}
+                          {declaration.employee?.first_name} {declaration.employee?.last_name}
                         </Typography>
                       }
-                      secondary={declaration.employee.designation || "Employee"}
+                      secondary={declaration.employee?.designation || "Employee"}
                     />
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="body2" color="success.main" fontWeight="medium">
@@ -416,7 +416,7 @@ const DeclarationDetails = () => {
               <List>
                 {undeclaredEmployees.map((employee) => (
                   <ListItem
-                    key={employee._id}
+                    key={employee?._id}
                     component={Paper}
                     elevation={1}
                     sx={{
@@ -427,22 +427,22 @@ const DeclarationDetails = () => {
                     }}
                   >
                     <ListItemAvatar>
-                      {employee.image ? (
-                        <Avatar alt={employee.first_name} src={employee.image} />
+                      {employee?.image ? (
+                        <Avatar alt={employee?.first_name} src={employee?.image} />
                       ) : (
                         <Avatar sx={{ bgcolor: '#FF6B6B' }}>
-                          {employee.first_name?.charAt(0)}
-                          {employee.last_name?.charAt(0)}
+                          {employee?.first_name?.charAt(0)}
+                          {employee?.last_name?.charAt(0)}
                         </Avatar>
                       )}
                     </ListItemAvatar>
                     <ListItemText
                       primary={
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {employee.first_name} {employee.last_name}
+                          {employee?.first_name} {employee?.last_name}
                         </Typography>
                       }
-                      secondary={employee.designation || "Employee"}
+                      secondary={employee?.designation || "Employee"}
                     />
                     {/* <Button
                       variant="contained"
@@ -504,7 +504,7 @@ const DeclarationDetails = () => {
           {submittedProofEmployees.length > 0 ? (
             <Box sx={{ overflowY: 'auto', flex: 1 }}>
               <List>
-                {submittedProofEmployees.map((declaration) => (
+                {submittedProofEmployees?.map((declaration) => (
                   <ListItem
                     key={declaration._id}
                     component={Paper}
@@ -518,7 +518,7 @@ const DeclarationDetails = () => {
                   >
                     <ListItemAvatar>
                       {declaration.employee?.image ? (
-                        <Avatar alt={declaration.employee.first_name} src={declaration.employee.image} />
+                        <Avatar alt={declaration.employee?.first_name} src={declaration.employee?.image} />
                       ) : (
                         <Avatar sx={{ bgcolor: '#4361EE' }}>
                           {declaration.employee?.first_name?.charAt(0)}
@@ -529,10 +529,10 @@ const DeclarationDetails = () => {
                     <ListItemText
                       primary={
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {declaration.employee.first_name} {declaration.employee.last_name}
+                          {declaration.employee?.first_name} {declaration.employee?.last_name}
                         </Typography>
                       }
-                      secondary={declaration.employee.designation || "Employee"}
+                      secondary={declaration.employee?.designation || "Employee"}
                     />
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="body2" color="primary" fontWeight="medium" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -608,7 +608,7 @@ const DeclarationDetails = () => {
                   >
                     <ListItemAvatar>
                       {declaration.employee?.image ? (
-                        <Avatar alt={declaration.employee.first_name} src={declaration.employee.image} />
+                        <Avatar alt={declaration.employee?.first_name} src={declaration.employee?.image} />
                       ) : (
                         <Avatar sx={{ bgcolor: '#FF9800' }}>
                           {declaration.employee?.first_name?.charAt(0)}
@@ -619,10 +619,10 @@ const DeclarationDetails = () => {
                     <ListItemText
                       primary={
                         <Typography variant="subtitle1" fontWeight="medium">
-                          {declaration.employee.first_name} {declaration.employee.last_name}
+                          {declaration.employee?.first_name} {declaration.employee?.last_name}
                         </Typography>
                       }
-                      secondary={declaration.employee.designation || "Employee"}
+                      secondary={declaration.employee?.designation || "Employee"}
                     />
                     {/* <Button
                       variant="contained"
